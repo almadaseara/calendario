@@ -1,4 +1,4 @@
-const CACHE = 'calendario-v5';
+const CACHE = 'calendario-v6';
 const SHELL = ['./', './manifest.webmanifest', './icon-192.png'];
 
 self.addEventListener('install', e => {
@@ -19,7 +19,7 @@ self.addEventListener('fetch', e => {
   const cdn = url.hostname === 'cdn.jsdelivr.net';
   if (!sameOrigin && !cdn) return;
   e.respondWith(
-    fetch(e.request).then(res => {
+    fetch(e.request, sameOrigin ? { cache: 'no-store' } : undefined).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
       return res;
     }).catch(() => caches.match(e.request, { ignoreSearch: sameOrigin }).then(r => r || caches.match('./')))
