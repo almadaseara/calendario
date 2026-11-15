@@ -169,7 +169,7 @@ nav button span{display:block;font-size:20px;line-height:22px}
     <h2>Conta</h2>
     <div class="card">
       <p id="u-email"></p>
-      <p>Versão 6</p>
+      <p>Versão 7</p>
       <button id="u-upd" style="width:100%;margin-bottom:8px">Buscar atualização</button>
       <button id="u-out" style="width:100%">Sair</button>
     </div>
@@ -556,22 +556,51 @@ function dictInput() {
     dictating = false; $('q-text').blur(); quickAdd();
   }, 2000);
 }
+let recTimer = null, recDone = false;
+function stopRec() {
+  clearTimeout(recTimer);
+  const r = rec; rec = null;
+  $('q-mic').classList.remove('primary');
+  if (r) { r.onresult = r.onerror = r.onend = null; try { r.abort(); } catch (e) {} }
+}
+function finishRec() {
+  if (recDone) return;
+  recDone = true;
+  const t = $('q-text').value.trim();
+  stopRec();
+  if (t) quickAdd(); else toast('Não ouvi nada. Toque no microfone e fale de novo.');
+}
+function keyboardDictation() {
+  dictating = true; $('q-text').value = ''; $('q-text').focus();
+  toast('Toque no microfone do teclado e fale. O formulário abre sozinho quando você parar.');
+}
 function voice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR || isIOS()) { dictating = true; $('q-text').value = ''; $('q-text').focus(); toast('Toque no microfone do teclado e fale. O formulário abre sozinho quando você parar.'); return; }
-  if (rec) { rec.stop(); return; }
+  if (!SR) { keyboardDictation(); return; }
+  if (rec) { finishRec(); return; }
+  recDone = false; dictating = false; $('q-text').value = '';
   try {
-    rec = new SR(); rec.lang = 'pt-BR'; rec.interimResults = true; rec.maxAlternatives = 1;
+    const r = new SR(); rec = r;
+    r.lang = 'pt-BR'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
     $('q-mic').classList.add('primary'); toast('Ouvindo… diga, por exemplo, "dentista quinta às 15h"');
-    let finalText = '';
-    rec.onresult = e => {
-      let t = ''; for (const r of e.results) t += r[0].transcript;
-      $('q-text').value = t; if (e.results[e.results.length - 1].isFinal) finalText = t;
+    const arm = ms => { clearTimeout(recTimer); recTimer = setTimeout(finishRec, ms); };
+    arm(8000);
+    r.onresult = e => {
+      if (rec !== r) return;
+      let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      $('q-text').value = t.trim();
+      if (e.results[e.results.length - 1].isFinal) finishRec(); else arm(1800);
     };
-    rec.onerror = () => { toast('Não consegui ouvir. Use o microfone do teclado para ditar.'); };
-    rec.onend = () => { rec = null; $('q-mic').classList.remove('primary'); if (finalText || $('q-text').value.trim()) quickAdd(); };
-    rec.start();
-  } catch (e) { rec = null; $('q-mic').classList.remove('primary'); $('q-text').focus(); toast('Use o microfone do teclado para ditar e toque em +'); }
+    r.onerror = e => {
+      if (rec !== r) return;
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        recDone = true; stopRec();
+        toast('Libere o Microfone e o Reconhecimento de Fala para este app nos Ajustes do iPhone.');
+      } else finishRec();
+    };
+    r.onend = () => { if (rec === r) finishRec(); };
+    r.start();
+  } catch (e) { recDone = true; stopRec(); keyboardDictation(); }
 }
 
 /* ---------- notificações ---------- */

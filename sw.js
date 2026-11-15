@@ -1,4 +1,4 @@
-const CACHE = 'calendario-v6';
+const CACHE = 'calendario-v7';
 const SHELL = ['./', './manifest.webmanifest', './icon-192.png'];
 
 self.addEventListener('install', e => {
