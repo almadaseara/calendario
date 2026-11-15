@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Calendário</title>
-<meta name="theme-color" content="#151515">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,47 +15,52 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
-  --bg:#151515;--card:#1f1f1e;--card2:#2a2a28;--line:#383836;--text:#f3f2ee;--muted:#a3a29b;--accent:#8e86f0;--danger:#f09595;
-  --violet-bg:#3C3489;--violet-tx:#CECBF6;--teal-bg:#085041;--teal-tx:#9FE1CB;--amber-bg:#633806;--amber-tx:#FAC775;
-  --red-bg:#5E0B0B;--red-tx:#F7C1C1;--pink-bg:#72243E;--pink-tx:#F4C0D1;--green-bg:#27500A;--green-tx:#C0DD97;
-  --blue-bg:#0C447C;--blue-tx:#B5D4F4;--gray-bg:#444441;--gray-tx:#D3D1C7;
+  --bg:#ffffff;--bg2:#f2f2f7;--card:#ffffff;--sheet:#f2f2f7;--group:#ffffff;--line:rgba(60,60,67,.2);--text:#000000;--muted:#8a8a8e;--accent:#ff3b30;--fill:rgba(118,118,128,.12);--danger:#ff3b30;--ok:#34c759;
+  --violet-bg:#EEEDFE;--violet-tx:#3C3489;--teal-bg:#E1F5EE;--teal-tx:#085041;--amber-bg:#FAEEDA;--amber-tx:#633806;
+  --red-bg:#F09595;--red-tx:#501313;--pink-bg:#FBEAF0;--pink-tx:#72243E;--green-bg:#EAF3DE;--green-tx:#27500A;
+  --blue-bg:#E6F1FB;--blue-tx:#0C447C;--gray-bg:#F1EFE8;--gray-tx:#444441;
 }
-@media (prefers-color-scheme: light){
+@media (prefers-color-scheme: dark){
   :root{
-    --bg:#f6f5f1;--card:#ffffff;--card2:#efeee8;--line:#dddbd2;--text:#1c1c1a;--muted:#6b6a64;--accent:#534AB7;--danger:#A32D2D;
-    --violet-bg:#EEEDFE;--violet-tx:#3C3489;--teal-bg:#E1F5EE;--teal-tx:#085041;--amber-bg:#FAEEDA;--amber-tx:#633806;
-    --red-bg:#F09595;--red-tx:#501313;--pink-bg:#FBEAF0;--pink-tx:#72243E;--green-bg:#EAF3DE;--green-tx:#27500A;
-    --blue-bg:#E6F1FB;--blue-tx:#0C447C;--gray-bg:#F1EFE8;--gray-tx:#444441;
+    --bg:#000000;--bg2:#000000;--card:#1c1c1e;--sheet:#1c1c1e;--group:#2c2c2e;--line:rgba(84,84,88,.65);--text:#ffffff;--muted:#98989f;--accent:#ff453a;--fill:rgba(118,118,128,.24);--danger:#ff453a;--ok:#30d158;
+    --violet-bg:#3C3489;--violet-tx:#CECBF6;--teal-bg:#085041;--teal-tx:#9FE1CB;--amber-bg:#633806;--amber-tx:#FAC775;
+    --red-bg:#5E0B0B;--red-tx:#F7C1C1;--pink-bg:#72243E;--pink-tx:#F4C0D1;--green-bg:#27500A;--green-tx:#C0DD97;
+    --blue-bg:#0C447C;--blue-tx:#B5D4F4;--gray-bg:#444441;--gray-tx:#D3D1C7;
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
-body{padding:env(safe-area-inset-top) 0 calc(76px + env(safe-area-inset-bottom));min-height:100vh}
-main{max-width:520px;margin:0 auto;padding:12px 14px}
-h1{font-size:22px;margin:0;font-weight:600}
-h2{font-size:15px;margin:22px 0 8px;font-weight:600;color:var(--muted)}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:17px;-webkit-font-smoothing:antialiased}
+body{padding:env(safe-area-inset-top) 0 calc(64px + env(safe-area-inset-bottom));min-height:100vh}
+body.grouped{background:var(--bg2)}
+main{max-width:520px;margin:0 auto;padding:6px 16px 16px}
 button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-button.ghost{background:transparent;border-color:transparent}
-button.danger{color:var(--danger)}
-input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
-textarea{min-height:70px;resize:vertical}
-label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
-.row{display:flex;gap:8px;align-items:center}
-.row>*{flex:1;min-width:0}
-.head{display:flex;align-items:center;gap:6px;margin-bottom:10px}
-.head h1{flex:1;text-transform:capitalize}
-.head button{min-width:44px;padding:8px 10px}
-.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.wd{font-size:12px;color:var(--muted);text-align:center;padding:4px 0}
-.cell{min-height:56px;border-radius:10px;padding:5px 6px;font-size:14px;color:var(--muted);border:2px solid transparent;overflow:hidden;background:transparent;text-align:left;display:block;width:100%}
-.cell.has{color:var(--text)}
-.cell.today{border-color:var(--muted)}
-.cell.sel{border-color:var(--accent)}
-.cell small{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:clip;margin-top:2px}
-.dots{display:flex;gap:3px;margin-top:4px}
-.dots i{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+button{cursor:pointer;border:0;background:none;padding:0;margin:0;text-align:inherit}
+input,select,textarea{background:none;border:0;outline:0;min-width:0}
+.hide{display:none!important}
+h1{font-size:32px;line-height:1.15;margin:0 0 10px;font-weight:700;letter-spacing:-.4px}
+h2{font-size:13px;margin:22px 4px 7px;font-weight:400;color:var(--muted);text-transform:uppercase;letter-spacing:.2px}
+.link{color:var(--accent);font-size:17px;min-height:44px;padding:0 4px}
+.link.strong{font-weight:600}
+.btn{display:block;width:100%;min-height:48px;border-radius:12px;background:var(--fill);font-weight:500;text-align:center;padding:0 14px}
+.btn.primary{background:var(--accent);color:#fff;font-weight:600}
+.field{width:100%;background:var(--fill);border-radius:11px;padding:10px 12px;min-height:44px}
+.top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.top .year{color:var(--accent);font-size:17px;font-weight:500}
+.tools{display:flex;align-items:center;gap:2px}
+.ic{width:44px;height:44px;color:var(--accent);font-size:28px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:300}
+#m-title{text-transform:capitalize}
+.wdrow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.wdrow{border-bottom:.5px solid var(--line);padding-bottom:5px;margin-bottom:5px}
+.wdrow span{font-size:11px;font-weight:600;color:var(--muted);text-align:center}
+.cell{min-height:60px;border-radius:10px;padding:4px 1px 3px;text-align:center;display:block;width:100%;overflow:hidden;color:var(--text)}
+.cell.we{color:var(--muted)}
+.num{display:inline-block;width:32px;height:32px;line-height:32px;border-radius:50%;font-size:18px}
+.num.sel{background:var(--text);color:var(--bg);font-weight:600}
+.num.today{color:var(--accent);font-weight:600}
+.num.today.sel{background:var(--accent);color:#fff}
+.cell small{display:block;font-size:10px;letter-spacing:-.3px;font-weight:500;line-height:1.2;white-space:nowrap;overflow:hidden;padding:0 2px}
+.dots{display:flex;gap:3px;justify-content:center;margin-top:3px;height:5px}
+.dots i{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.55}
 .c-violet{background:var(--violet-bg);color:var(--violet-tx)!important}
 .c-teal{background:var(--teal-bg);color:var(--teal-tx)!important}
 .c-amber{background:var(--amber-bg);color:var(--amber-tx)!important}
@@ -63,158 +69,188 @@ label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
 .c-green{background:var(--green-bg);color:var(--green-tx)!important}
 .c-blue{background:var(--blue-bg);color:var(--blue-tx)!important}
 .c-gray{background:var(--gray-bg);color:var(--gray-tx)!important}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:2px solid transparent;border-radius:10px;padding:6px 12px;font-size:14px;min-height:36px}
-.chip.on{border-color:var(--text)}
-.item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px;width:100%;text-align:left;min-height:52px}
-.item .bar{width:6px;align-self:stretch;border-radius:3px;flex:none;background:var(--gray-bg)}
-.item .tx{flex:1;min-width:0}
-.item .tx b{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.item .tx span{font-size:13px;color:var(--muted)}
-.item.done b{text-decoration:line-through;color:var(--muted)}
-.check{width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);flex:none;padding:0;min-height:0;background:transparent;display:flex;align-items:center;justify-content:center;font-size:14px}
+.calbar{display:flex;align-items:center;justify-content:space-between;border-top:.5px solid var(--line);margin-top:6px}
+.quick{display:flex;gap:8px;align-items:center;margin:4px 0 6px}
+.quick .field{flex:1}
+.round{width:44px;height:44px;border-radius:50%;background:var(--fill);display:flex;align-items:center;justify-content:center;flex:none;color:var(--accent)}
+.round.primary{background:var(--accent);color:#fff}
+#d-title{text-transform:none;font-size:15px;font-weight:600;color:var(--text);margin:16px 2px 8px;letter-spacing:0}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border-radius:16px;padding:7px 13px;font-size:14px;font-weight:500;white-space:nowrap;flex:none;border:2px solid transparent}
+.chip.on{border-color:currentColor}
+.list{background:var(--card);border-radius:12px;overflow:hidden;margin-top:10px}
+body:not(.grouped) .list{background:var(--bg2)}
+@media (prefers-color-scheme: dark){body:not(.grouped) .list{background:var(--card)}}
+.ev{display:flex;align-items:stretch;gap:10px;width:100%;padding:10px 12px;min-height:54px;position:relative;text-align:left}
+.ev+.ev::before{content:"";position:absolute;top:0;left:12px;right:0;border-top:.5px solid var(--line)}
+.ev .tm{width:46px;flex:none;font-size:13px;display:flex;flex-direction:column;justify-content:center;text-align:right}
+.ev .tm b{font-weight:500}
+.ev .tm i{font-style:normal;color:var(--muted)}
+.ev .bar{width:4px;border-radius:2px;flex:none;color:var(--muted);background:currentColor!important}
+.ev .tx{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.ev .tx b{font-weight:500;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev .tx span{font-size:13px;color:var(--muted)}
+.ev.task{align-items:center}
+.ev.done .tx b{color:var(--muted);text-decoration:line-through}
+.check{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--muted);flex:none;display:flex;align-items:center;justify-content:center;font-size:13px}
 .check.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.empty{color:var(--muted);font-size:14px;padding:10px 2px}
-nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
-nav button{flex:1;border:0;border-radius:0;background:transparent;font-size:12px;color:var(--muted);padding:10px 0;min-height:56px}
-nav button.on{color:var(--accent);font-weight:600}
-nav button span{display:block;font-size:20px;line-height:22px}
-.quick{display:flex;gap:6px;margin:12px 0}
-.quick input{flex:1}
-.quick button{flex:none;min-width:48px;padding:8px}
-.sheetwrap{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:none;align-items:flex-end;justify-content:center}
+.empty{color:var(--muted);font-size:15px;padding:14px 4px;line-height:1.4}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:.5px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){nav{background:color-mix(in srgb,var(--card) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}}
+nav button{flex:1;font-size:10px;font-weight:500;color:var(--muted);padding:7px 0 5px;min-height:52px;text-align:center}
+nav button.on{color:var(--accent)}
+nav svg{display:block;margin:0 auto 2px}
+.sheetwrap{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10;display:none;align-items:flex-end;justify-content:center}
 .sheetwrap.open{display:flex}
-.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
-.sheet h3{margin:0 0 4px;font-size:18px}
-.seg{display:flex;background:var(--card2);border-radius:10px;padding:3px;margin-top:10px}
-.seg button{flex:1;border:0;background:transparent;min-height:38px;padding:6px}
-.seg button.on{background:var(--accent);color:#fff}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:88%;display:none}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
-.card p{margin:0 0 10px;font-size:14px;color:var(--muted);line-height:1.45}
-.hide{display:none!important}
-.catrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.sheet{background:var(--sheet);width:100%;max-width:520px;max-height:94vh;overflow:auto;border-radius:14px 14px 0 0;padding:6px 16px calc(22px + env(safe-area-inset-bottom))}
+.shead{display:flex;align-items:center;justify-content:space-between;min-height:48px}
+.shead h3{margin:0;font-size:17px;font-weight:600}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin:4px 0 14px}
+.seg button{flex:1;min-height:32px;border-radius:7px;font-size:14px;font-weight:500;text-align:center}
+.seg button.on{background:var(--group);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.group{background:var(--group);border-radius:12px;margin-bottom:16px;overflow:hidden;display:block;width:100%}
+body.grouped main .group{background:var(--card)}
+.frow{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px;padding:5px 14px;position:relative}
+.frow+.frow::before,#f-times .frow::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--line)}
+.frow label{flex:none;font-size:17px}
+.frow>input:not([type]),.frow>textarea{flex:1;width:100%}
+.frow textarea{min-height:76px;padding:8px 0;resize:none}
+.frow select{text-align:right;text-align-last:right;color:var(--muted);max-width:62%;-webkit-appearance:none;appearance:none}
+.frow input[type=date],.frow input[type=time]{background:var(--fill);border-radius:8px;padding:6px 10px;min-height:34px;-webkit-appearance:none;appearance:none}
+.toggle{-webkit-appearance:none;appearance:none;width:51px;height:31px;border-radius:16px;background:var(--fill);position:relative;flex:none;transition:background .2s}
+.toggle::before{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:transform .2s}
+.toggle:checked{background:var(--ok)}
+.toggle:checked::before{transform:translateX(20px)}
+.group.danger,.danger{color:var(--danger)}
+button.group{min-height:46px;text-align:center}
+.note{font-size:13px;color:var(--muted);line-height:1.4;margin:-8px 14px 16px}
+.pad{padding:12px 14px}
+.pad p{margin:0 0 10px;font-size:15px;color:var(--muted);line-height:1.4}
+.pad .btn+.btn{margin-top:8px}
+.catrow{display:flex;gap:8px;align-items:center;padding:6px 8px 6px 14px;position:relative;min-height:46px}
+.catrow+.catrow::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--line)}
 .catrow input{flex:1}
-.catrow select{flex:none;width:118px}
-.catrow button{flex:none;min-width:44px;padding:8px}
-.switch{display:flex;align-items:center;gap:10px;margin-top:12px}
-.switch input{width:22px;height:22px;min-height:0;flex:none}
-.switch span{font-size:15px}
+.catrow select{flex:none;width:112px;border-radius:8px;padding:6px 8px;font-size:14px;-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center}
+.catrow button{flex:none;width:36px;height:36px;text-align:center;color:var(--danger)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(78px + env(safe-area-inset-bottom));background:rgba(40,40,42,.94);color:#fff;padding:10px 16px;border-radius:14px;font-size:14px;line-height:1.35;z-index:20;max-width:88%;display:none;text-align:center}
+#auth{padding-top:60px}
+#auth .field{margin-bottom:10px}
+#auth p{color:var(--muted);font-size:15px;line-height:1.4}
 </style>
 </head>
 <body>
 
 <main id="auth" class="hide">
-  <h1 style="margin-top:40px">Calendário</h1>
-  <p style="color:var(--muted)">Entre para ver seus compromissos e tarefas.</p>
-  <label for="a-email">E-mail</label>
-  <input id="a-email" type="email" autocomplete="email" inputmode="email" placeholder="nome@email.com">
-  <label for="a-pass">Senha</label>
-  <input id="a-pass" type="password" autocomplete="current-password" placeholder="Mínimo de 6 caracteres">
-  <div class="row" style="margin-top:16px">
-    <button class="primary" id="a-in">Entrar</button>
-    <button id="a-up">Criar conta</button>
-  </div>
-  <p id="a-msg" style="color:var(--muted);font-size:14px"></p>
+  <h1>Calendário</h1>
+  <p>Entre para ver seus eventos e tarefas.</p>
+  <input id="a-email" class="field" type="email" autocomplete="email" inputmode="email" placeholder="E-mail" aria-label="E-mail">
+  <input id="a-pass" class="field" type="password" autocomplete="current-password" placeholder="Senha (mínimo de 6 caracteres)" aria-label="Senha">
+  <button class="btn primary" id="a-in" style="margin-top:6px">Entrar</button>
+  <button class="btn" id="a-up" style="margin-top:8px">Criar conta</button>
+  <p id="a-msg"></p>
 </main>
 
 <main id="app" class="hide">
   <section id="v-cal">
-    <div class="head">
-      <h1 id="m-title"></h1>
-      <button id="m-today">Hoje</button>
-      <button id="m-prev" aria-label="Mês anterior">‹</button>
-      <button id="m-next" aria-label="Próximo mês">›</button>
+    <div class="top">
+      <span class="year" id="m-year"></span>
+      <div class="tools">
+        <button class="ic" id="m-prev" aria-label="Mês anterior">‹</button>
+        <button class="ic" id="m-next" aria-label="Próximo mês">›</button>
+        <button class="ic" id="q-plus" aria-label="Novo evento">+</button>
+      </div>
     </div>
+    <h1 id="m-title"></h1>
+    <div class="wdrow"><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span><span>D</span></div>
     <div class="grid" id="m-grid"></div>
+    <div class="calbar"><button class="link" id="m-today">Hoje</button></div>
     <div class="quick">
-      <input id="q-text" placeholder="Reunião sexta às 14h" enterkeyhint="done" aria-label="Adicionar rápido">
-      <button id="q-mic" aria-label="Falar">🎤</button>
-      <button id="q-add" class="primary" aria-label="Adicionar">+</button>
+      <input id="q-text" class="field" placeholder="Dentista quinta às 15h" enterkeyhint="done" aria-label="Adicionar rápido">
+      <button id="q-mic" class="round" aria-label="Falar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button id="q-add" class="round primary" aria-label="Adicionar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
     </div>
     <h2 id="d-title"></h2>
     <div class="chips" id="d-chips"></div>
-    <div id="d-list" style="margin-top:10px"></div>
+    <div id="d-list"></div>
   </section>
 
   <section id="v-agenda" class="hide">
-    <div class="head"><h1>Agenda</h1></div>
+    <h1 style="margin-top:8px">Agenda</h1>
+    <input id="ag-q" class="field" type="search" placeholder="Buscar" aria-label="Buscar eventos e tarefas" enterkeyhint="search">
     <div id="ag-list"></div>
   </section>
 
   <section id="v-tasks" class="hide">
-    <div class="head"><h1>Tarefas</h1><button class="primary" id="t-new">Nova</button></div>
+    <div class="top"><span></span><button class="ic" id="t-new" aria-label="Nova tarefa">+</button></div>
+    <h1>Tarefas</h1>
     <div id="t-list"></div>
   </section>
 
   <section id="v-set" class="hide">
-    <div class="head"><h1>Ajustes</h1></div>
+    <h1 style="margin-top:8px">Ajustes</h1>
     <h2>Notificações</h2>
-    <div class="card">
+    <div class="group pad">
       <p id="n-status"></p>
-      <div class="row">
-        <button class="primary" id="n-on">Ativar notificações</button>
-        <button id="n-test">Enviar teste</button>
-      </div>
+      <button class="btn primary" id="n-on">Ativar notificações</button>
+      <button class="btn" id="n-test">Enviar teste</button>
     </div>
     <h2>Categorias</h2>
-    <div class="card">
+    <div class="group">
       <div id="c-list"></div>
-      <button id="c-new" style="width:100%">Nova categoria</button>
     </div>
+    <button class="group link" id="c-new" style="margin-top:-8px">Nova categoria</button>
     <h2>Instalar no iPhone</h2>
-    <div class="card">
-      <p>Abra este endereço no Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início". Abra o app pelo ícone novo e ative as notificações aqui em Ajustes.</p>
+    <div class="group pad">
+      <p style="margin:0">Abra este endereço no Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início". Abra o app pelo ícone novo e ative as notificações aqui em Ajustes.</p>
     </div>
     <h2>Conta</h2>
-    <div class="card">
+    <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 9</p>
-      <button id="u-upd" style="width:100%;margin-bottom:8px">Buscar atualização</button>
-      <button id="u-out" style="width:100%">Sair</button>
+      <p>Versão 10</p>
+      <button class="btn" id="u-upd">Buscar atualização</button>
+      <button class="btn danger" id="u-out">Sair</button>
     </div>
   </section>
 </main>
 
 <nav id="nav" class="hide">
-  <button data-v="cal" class="on"><span>▦</span>Calendário</button>
-  <button data-v="agenda"><span>☰</span>Agenda</button>
-  <button data-v="tasks"><span>✓</span>Tarefas</button>
-  <button data-v="set"><span>⚙</span>Ajustes</button>
+  <button data-v="cal" class="on"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Calendário</button>
+  <button data-v="agenda"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.5" cy="6.5" r="1.1"/><circle cx="4.5" cy="12" r="1.1"/><circle cx="4.5" cy="17.5" r="1.1"/></svg>Agenda</button>
+  <button data-v="tasks"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.6 2.6 4.9-5.4"/></svg>Tarefas</button>
+  <button data-v="set"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>Ajustes</button>
 </nav>
 
 <div class="sheetwrap" id="sheet">
   <div class="sheet">
-    <h3 id="f-head">Novo</h3>
+    <div class="shead">
+      <button class="link" id="f-cancel">Cancelar</button>
+      <h3 id="f-head">Novo</h3>
+      <button class="link strong" id="f-save">Salvar</button>
+    </div>
     <div class="seg" id="f-seg">
-      <button data-k="event" class="on">Compromisso</button>
+      <button data-k="event" class="on">Evento</button>
       <button data-k="task">Tarefa</button>
     </div>
-    <label for="f-title">Título</label>
-    <input id="f-title" placeholder="Reunião com a equipe">
-    <div id="f-catbox">
-      <label for="f-cat">Categoria</label>
-      <select id="f-cat"></select>
+    <div class="group">
+      <div class="frow"><input id="f-title" placeholder="Título" aria-label="Título"></div>
+      <div class="frow" id="f-catbox"><label for="f-cat">Categoria</label><select id="f-cat"></select></div>
     </div>
-    <label for="f-day" id="f-daylabel">Data</label>
-    <input id="f-day" type="date">
-    <div class="switch" id="f-allbox">
-      <input id="f-all" type="checkbox">
-      <span>Dia todo</span>
+    <div class="group">
+      <div class="frow" id="f-allbox"><label for="f-all">Dia inteiro</label><input id="f-all" type="checkbox" class="toggle"></div>
+      <div class="frow"><label for="f-day" id="f-daylabel">Data</label><input id="f-day" type="date"></div>
+      <div id="f-times">
+        <div class="frow"><label for="f-start" id="f-startlabel">Início</label><input id="f-start" type="time"></div>
+        <div class="frow" id="f-endbox"><label for="f-end">Fim</label><input id="f-end" type="time"></div>
+      </div>
     </div>
-    <div class="row" id="f-times">
-      <div><label for="f-start" id="f-startlabel">Início</label><input id="f-start" type="time"></div>
-      <div id="f-endbox"><label for="f-end">Fim</label><input id="f-end" type="time"></div>
+    <div class="group">
+      <div class="frow"><label for="f-remind">Alerta</label><select id="f-remind"></select></div>
     </div>
-    <label for="f-remind">Lembrete</label>
-    <select id="f-remind"></select>
-    <label for="f-notes">Observações</label>
-    <textarea id="f-notes"></textarea>
-    <div class="row" style="margin-top:16px">
-      <button id="f-cancel">Cancelar</button>
-      <button class="primary" id="f-save">Salvar</button>
+    <div class="group">
+      <div class="frow"><textarea id="f-notes" placeholder="Notas" aria-label="Notas"></textarea></div>
     </div>
-    <button class="ghost danger hide" id="f-del" style="width:100%;margin-top:8px">Excluir</button>
+    <button class="group danger hide" id="f-del">Apagar</button>
   </div>
 </div>
 
@@ -270,9 +306,9 @@ const isMarker = e => !e.start_time && e.category_id && catOf(e.category_id) && 
 
 /* ---------- lembretes ---------- */
 function remindOptions(hasDay, hasTime) {
-  if (!hasDay) return [['', 'Sem lembrete']];
-  if (hasTime) return [['', 'Sem lembrete'], ['m0', 'Na hora'], ['m10', '10 minutos antes'], ['m30', '30 minutos antes'], ['m60', '1 hora antes'], ['m1440', '1 dia antes']];
-  return [['', 'Sem lembrete'], ['d8', 'No dia, às 8h'], ['v20', 'Na véspera, às 20h']];
+  if (!hasDay) return [['', 'Nenhum']];
+  if (hasTime) return [['', 'Nenhum'], ['m0', 'Na hora'], ['m10', '10 minutos antes'], ['m30', '30 minutos antes'], ['m60', '1 hora antes'], ['m1440', '1 dia antes']];
+  return [['', 'Nenhum'], ['d8', 'No dia, às 8h'], ['v20', 'Na véspera, às 20h']];
 }
 function computeRemind(day, time, rule) {
   if (!day || !rule) return null;
@@ -315,6 +351,7 @@ async function loadAll() {
 function render() {
   ['cal', 'agenda', 'tasks', 'set'].forEach(v => $('v-' + v).classList.toggle('hide', S.view !== v));
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
+  document.body.classList.toggle('grouped', S.view !== 'cal');
   if (S.view === 'cal') renderCal();
   if (S.view === 'agenda') renderAgenda();
   if (S.view === 'tasks') renderTasks();
@@ -323,14 +360,15 @@ function render() {
 
 function renderCal() {
   const y = S.month.getFullYear(), m = S.month.getMonth();
-  $('m-title').textContent = MONTHS[m] + ' ' + y;
+  $('m-title').textContent = MONTHS[m];
+  $('m-year').textContent = y;
   const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), offset = (first.getDay() + 6) % 7;
   const today = ymd(new Date());
   const byDay = {};
   S.events.forEach(e => (byDay[e.day] = byDay[e.day] || []).push(e));
   const taskDay = {};
   S.tasks.forEach(t => { if (t.due_day && !t.done) taskDay[t.due_day] = (taskDay[t.due_day] || 0) + 1; });
-  let h = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'].map(d => '<div class="wd">' + d + '</div>').join('');
+  let h = '';
   for (let i = 0; i < offset; i++) h += '<div></div>';
   for (let d = 1; d <= days; d++) {
     const key = y + '-' + pad(m + 1) + '-' + pad(d);
@@ -339,59 +377,64 @@ function renderCal() {
     const cat = allDay && catOf(allDay.category_id);
     const others = evs.filter(e => e !== allDay).length + (taskDay[key] || 0);
     const cls = ['cell'];
-    if (cat) cls.push('c-' + cat.color);
-    if (evs.length || taskDay[key]) cls.push('has');
-    if (key === today) cls.push('today');
-    if (key === S.sel) cls.push('sel');
-    h += '<button class="' + cls.join(' ') + '" data-day="' + key + '">' + d +
+    if (cat) cls.push('c-' + cat.color); else if ((offset + d - 1) % 7 >= 5) cls.push('we');
+    const ncls = ['num'];
+    if (key === today) ncls.push('today');
+    if (key === S.sel) ncls.push('sel');
+    h += '<button class="' + cls.join(' ') + '" data-day="' + key + '"><span class="' + ncls.join(' ') + '">' + d + '</span>' +
       (allDay ? '<small>' + esc(allDay.title) + '</small>' : '') +
-      (others ? '<div class="dots">' + '<i></i>'.repeat(Math.min(others, 4)) + '</div>' : '') + '</button>';
+      (others ? '<span class="dots">' + '<i></i>'.repeat(Math.min(others, 3)) + '</span>' : '') + '</button>';
   }
   $('m-grid').innerHTML = h;
   renderDay();
 }
 
+const listWrap = rows => rows.length ? '<div class="list">' + rows.join('') + '</div>' : '';
 function itemHtml(kind, o) {
   if (kind === 'event') {
     const cat = catOf(o.category_id);
-    const when = o.start_time ? hm(o.start_time) + (o.end_time ? ' – ' + hm(o.end_time) : '') : 'Dia todo';
-    return '<button class="item" data-ev="' + o.id + '"><span class="bar' + (cat ? ' c-' + cat.color : '') + '"></span><span class="tx"><b>' + esc(o.title) +
-      '</b><span>' + when + (cat ? ' · ' + esc(cat.name) : '') + (o.remind_at ? ' · 🔔' : '') + '</span></span></button>';
+    const tm = o.start_time ? '<b>' + hm(o.start_time) + '</b>' + (o.end_time ? '<i>' + hm(o.end_time) + '</i>' : '') : '<b>dia</b><i>inteiro</i>';
+    const sub = [cat && cat.name !== o.title ? esc(cat.name) : '', o.remind_at ? 'com alerta' : ''].filter(Boolean).join(' · ');
+    return '<button class="ev" data-ev="' + o.id + '"><span class="tm">' + tm + '</span><span class="bar' + (cat ? ' c-' + cat.color : '') + '"></span><span class="tx"><b>' + esc(o.title) + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</span></button>';
   }
-  const due = o.due_day ? dayLabel(o.due_day) + (o.due_time ? ' às ' + hm(o.due_time) : '') : 'Sem prazo';
-  return '<div class="item' + (o.done ? ' done' : '') + '"><button class="check' + (o.done ? ' on' : '') + '" data-chk="' + o.id + '" aria-label="Concluir">' + (o.done ? '✓' : '') +
-    '</button><button class="tx ghost" data-tk="' + o.id + '" style="text-align:left;padding:0;min-height:0"><b>' + esc(o.title) + '</b><span>' + due + (o.remind_at && !o.done ? ' · 🔔' : '') + '</span></button></div>';
+  const due = o.due_day ? dayLabel(o.due_day) + (o.due_time ? ' às ' + hm(o.due_time) : '') : '';
+  const sub = [due, o.remind_at && !o.done ? 'com alerta' : ''].filter(Boolean).join(' · ');
+  return '<div class="ev task' + (o.done ? ' done' : '') + '"><button class="check' + (o.done ? ' on' : '') + '" data-chk="' + o.id + '" aria-label="Concluir">' + (o.done ? '✓' : '') +
+    '</button><button class="tx" data-tk="' + o.id + '"><b>' + esc(o.title) + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</button></div>';
 }
 
 function renderDay() {
   $('d-title').textContent = dayLabel(S.sel);
   const evs = S.events.filter(e => e.day === S.sel);
   const marker = evs.find(isMarker);
-  $('d-chips').innerHTML = S.cats.map(c => '<button class="chip c-' + c.color + (marker && marker.category_id === c.id ? ' on' : '') + '" data-mark="' + c.id + '">' + esc(c.name) + '</button>').join('');
+  $('d-chips').innerHTML = S.cats.map(c => '<button class="chip c-' + c.color + (marker && marker.category_id === c.id ? ' on' : '') + '" data-mark="' + c.id + '">' + (marker && marker.category_id === c.id ? '✓ ' : '') + esc(c.name) + '</button>').join('');
   const tks = S.tasks.filter(t => t.due_day === S.sel);
   const list = evs.filter(e => !isMarker(e)).map(e => itemHtml('event', e)).concat(tks.map(t => itemHtml('task', t)));
-  $('d-list').innerHTML = list.join('') || '<div class="empty">Nada marcado. Toque numa categoria para pintar o dia ou em + para criar um compromisso.</div>';
+  $('d-list').innerHTML = listWrap(list) || '<div class="empty">Nenhum evento. Toque numa categoria para marcar o dia ou em + para criar um evento.</div>';
 }
 
 function renderAgenda() {
   const today = ymd(new Date());
+  const q = plain($('ag-q').value.trim());
   const rows = [];
-  S.events.filter(e => e.day >= today).forEach(e => rows.push([e.day, e.start_time || '', 'event', e]));
-  S.tasks.filter(t => !t.done && t.due_day && t.due_day >= today).forEach(t => rows.push([t.due_day, t.due_time || '', 'task', t]));
+  S.events.filter(e => q ? plain(e.title + ' ' + (e.notes || '')).includes(q) : e.day >= today).forEach(e => rows.push([e.day, e.start_time || '', 'event', e]));
+  S.tasks.filter(t => q ? plain(t.title + ' ' + (t.notes || '')).includes(q) : (!t.done && t.due_day && t.due_day >= today)).forEach(t => rows.push([t.due_day || '9999-12-31', t.due_time || '', 'task', t]));
   rows.sort((a, b) => (a[0] + a[1]).localeCompare(b[0] + b[1]));
-  let h = '', last = '';
-  rows.slice(0, 200).forEach(([day, , kind, o]) => {
-    if (day !== last) { h += '<h2>' + dayLabel(day) + '</h2>'; last = day; }
-    h += itemHtml(kind, o);
+  let h = '', last = null, group = [];
+  const flush = () => { if (group.length) h += '<h2>' + (last === '9999-12-31' ? 'Sem data' : dayLabel(last)) + '</h2>' + listWrap(group); group = []; };
+  rows.slice(0, 300).forEach(([day, , kind, o]) => {
+    if (day !== last) { flush(); last = day; }
+    group.push(itemHtml(kind, o));
   });
-  $('ag-list').innerHTML = h || '<div class="empty">Sua agenda está livre. Crie um compromisso pelo calendário.</div>';
+  flush();
+  $('ag-list').innerHTML = h || '<div class="empty">' + (q ? 'Nada encontrado para essa busca.' : 'Sua agenda está livre. Crie um evento pelo calendário.') + '</div>';
 }
 
 function renderTasks() {
   const open = S.tasks.filter(t => !t.done), done = S.tasks.filter(t => t.done).slice(0, 30);
   open.sort((a, b) => ((a.due_day || '9999') + (a.due_time || '')).localeCompare((b.due_day || '9999') + (b.due_time || '')));
-  let h = open.map(t => itemHtml('task', t)).join('') || '<div class="empty">Nenhuma tarefa pendente. Toque em Nova para criar a primeira.</div>';
-  if (done.length) h += '<h2>Concluídas</h2>' + done.map(t => itemHtml('task', t)).join('');
+  let h = listWrap(open.map(t => itemHtml('task', t))) || '<div class="empty">Nenhuma tarefa pendente. Toque em + para criar a primeira.</div>';
+  if (done.length) h += '<h2>Concluídas</h2>' + listWrap(done.map(t => itemHtml('task', t)));
   $('t-list').innerHTML = h;
 }
 
@@ -399,7 +442,7 @@ function renderSet() {
   $('u-email').textContent = S.user ? S.user.email : '';
   $('c-list').innerHTML = S.cats.map(c => '<div class="catrow"><input value="' + esc(c.name) + '" data-cname="' + c.id + '" aria-label="Nome da categoria"><select data-ccolor="' + c.id + '" class="c-' + c.color + '" aria-label="Cor">' +
     Object.entries(COLORS).map(([k, v]) => '<option value="' + k + '"' + (k === c.color ? ' selected' : '') + '>' + v + '</option>').join('') +
-    '</select><button data-cdel="' + c.id + '" class="danger" aria-label="Excluir categoria">✕</button></div>').join('');
+    '</select><button data-cdel="' + c.id + '" aria-label="Excluir categoria">✕</button></div>').join('');
   pushStatus();
 }
 
@@ -407,7 +450,7 @@ function renderSet() {
 function fillRemind(selected) {
   const hasDay = !!$('f-day').value, hasTime = S.kind === 'event' ? !$('f-all').checked && !!$('f-start').value : !!$('f-start').value;
   const opts = remindOptions(hasDay, hasTime);
-  if (selected === 'keep') opts.push(['keep', 'Manter o lembrete atual']);
+  if (selected === 'keep') opts.push(['keep', 'Manter o alerta atual']);
   $('f-remind').innerHTML = opts.map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('');
   $('f-remind').value = opts.some(o => o[0] === selected) ? selected : '';
   $('f-remind').disabled = !hasDay;
@@ -418,14 +461,14 @@ function setKind(k) {
   $('f-catbox').classList.toggle('hide', k !== 'event');
   $('f-allbox').classList.toggle('hide', k !== 'event');
   $('f-endbox').classList.toggle('hide', k !== 'event');
-  $('f-daylabel').textContent = k === 'event' ? 'Data' : 'Prazo (opcional)';
-  $('f-startlabel').textContent = k === 'event' ? 'Início' : 'Hora (opcional)';
+  $('f-daylabel').textContent = k === 'event' ? 'Data' : 'Prazo';
+  $('f-startlabel').textContent = k === 'event' ? 'Início' : 'Hora';
   $('f-times').classList.toggle('hide', k === 'event' && $('f-all').checked);
 }
 function openEditor(kind, o, draft) {
   S.edit = o ? { kind, id: o.id, remind_at: o.remind_at } : null;
   const v = o || draft || {};
-  $('f-head').textContent = o ? (kind === 'event' ? 'Editar compromisso' : 'Editar tarefa') : 'Novo';
+  $('f-head').textContent = o ? (kind === 'event' ? 'Editar evento' : 'Editar tarefa') : 'Novo';
   $('f-seg').classList.toggle('hide', !!o);
   $('f-del').classList.toggle('hide', !o);
   $('f-title').value = v.title || '';
@@ -466,7 +509,7 @@ async function saveEditor() {
     if (isEvent && day) { S.sel = day; const d = fromYmd(day); S.month = new Date(d.getFullYear(), d.getMonth(), 1); }
     closeEditor();
     await loadAll();
-    toast(remind && new Date(remind) > new Date() ? 'Salvo, com lembrete' : 'Salvo');
+    toast(remind && new Date(remind) > new Date() ? 'Salvo, com alerta' : 'Salvo');
   } finally { $('f-save').disabled = false; }
 }
 
@@ -754,6 +797,15 @@ $('m-next').onclick = () => { S.month = new Date(S.month.getFullYear(), S.month.
 $('m-today').onclick = () => { const n = new Date(); S.month = new Date(n.getFullYear(), n.getMonth(), 1); S.sel = ymd(n); renderCal(); };
 $('q-add').onclick = () => { dictating = false; clearTimeout(dictTimer); quickAdd(); };
 $('q-mic').onclick = voice;
+$('q-plus').onclick = () => openEditor('event', null, { day: S.sel });
+$('ag-q').addEventListener('input', renderAgenda);
+let swX = null, swY = null;
+$('m-grid').addEventListener('touchstart', e => { swX = e.touches[0].clientX; swY = e.touches[0].clientY; }, { passive: true });
+$('m-grid').addEventListener('touchend', e => {
+  if (swX === null) return;
+  const dx = e.changedTouches[0].clientX - swX, dy = e.changedTouches[0].clientY - swY; swX = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) $(dx < 0 ? 'm-next' : 'm-prev').click();
+}, { passive: true });
 $('q-text').addEventListener('keydown', e => { if (e.key === 'Enter') { dictating = false; quickAdd(); } });
 $('q-text').addEventListener('input', dictInput);
 $('q-text').addEventListener('blur', () => { setTimeout(() => { if (dictating && !$('q-text').value.trim()) dictating = false; }, 300); });
