@@ -169,7 +169,7 @@ nav button span{display:block;font-size:20px;line-height:22px}
     <h2>Conta</h2>
     <div class="card">
       <p id="u-email"></p>
-      <p>Versão 7</p>
+      <p>Versão 8</p>
       <button id="u-upd" style="width:100%;margin-bottom:8px">Buscar atualização</button>
       <button id="u-out" style="width:100%">Sair</button>
     </div>
@@ -556,35 +556,62 @@ function dictInput() {
     dictating = false; $('q-text').blur(); quickAdd();
   }, 2000);
 }
-let recTimer = null, recDone = false;
+let recTimer = null, recDone = false, recLog = '', recCount = 0, recFails = 0, recEndedAt = 0;
 function stopRec() {
   clearTimeout(recTimer);
   const r = rec; rec = null;
   $('q-mic').classList.remove('primary');
-  if (r) { r.onresult = r.onerror = r.onend = null; try { r.abort(); } catch (e) {} }
+  if (r) {
+    r.onresult = r.onerror = null;
+    r.onend = () => { recEndedAt = Date.now(); };
+    try { r.stop(); } catch (e) {}
+    recEndedAt = Date.now();
+  }
 }
 function finishRec() {
   if (recDone) return;
   recDone = true;
   const t = $('q-text').value.trim();
   stopRec();
-  if (t) quickAdd(); else toast('Não ouvi nada. Toque no microfone e fale de novo.');
+  if (t) { recFails = 0; quickAdd(); return; }
+  recFails++;
+  if (recFails >= 2) { recFails = 0; keyboardDictation(); return; }
+  toast('Não ouvi nada. Toque no microfone e fale de novo. [' + (recLog || 'sem sinal') + ']');
 }
 function keyboardDictation() {
   dictating = true; $('q-text').value = ''; $('q-text').focus();
-  toast('Toque no microfone do teclado e fale. O formulário abre sozinho quando você parar.');
+  toast('O microfone do app não respondeu. Use o microfone do teclado; o formulário abre sozinho quando você parar.');
 }
-function voice() {
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function primeMic() {
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    st.getTracks().forEach(t => t.stop());
+    recLog += 'm';
+  } catch (e) { recLog += 'M'; }
+  await wait(350);
+}
+async function voice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { keyboardDictation(); return; }
   if (rec) { finishRec(); return; }
-  recDone = false; dictating = false; $('q-text').value = '';
+  if (recDone === null) return;
+  recDone = null; dictating = false; recLog = ''; $('q-text').value = '';
+  $('q-mic').classList.add('primary'); toast('Preparando o microfone…');
   try {
-    const r = new SR(); rec = r;
+    if (recCount > 0) {
+      const since = Date.now() - recEndedAt;
+      if (since < 1200) await wait(1200 - since);
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) await primeMic();
+    }
+    recCount++;
+    const r = new SR(); rec = r; recDone = false;
     r.lang = 'pt-BR'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
-    $('q-mic').classList.add('primary'); toast('Ouvindo… diga, por exemplo, "dentista quinta às 15h"');
     const arm = ms => { clearTimeout(recTimer); recTimer = setTimeout(finishRec, ms); };
-    arm(8000);
+    arm(9000);
+    r.onstart = () => { recLog += 's'; toast('Ouvindo… diga, por exemplo, "dentista quinta às 15h"'); };
+    r.onaudiostart = () => { recLog += 'a'; };
+    r.onspeechstart = () => { recLog += 'f'; };
     r.onresult = e => {
       if (rec !== r) return;
       let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
@@ -592,13 +619,14 @@ function voice() {
       if (e.results[e.results.length - 1].isFinal) finishRec(); else arm(1800);
     };
     r.onerror = e => {
+      recLog += ' erro:' + e.error;
       if (rec !== r) return;
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
         recDone = true; stopRec();
         toast('Libere o Microfone e o Reconhecimento de Fala para este app nos Ajustes do iPhone.');
       } else finishRec();
     };
-    r.onend = () => { if (rec === r) finishRec(); };
+    r.onend = () => { recLog += 'x'; recEndedAt = Date.now(); if (rec === r) finishRec(); };
     r.start();
   } catch (e) { recDone = true; stopRec(); keyboardDictation(); }
 }
