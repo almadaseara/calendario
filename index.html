@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calendário</title>
+<meta name="theme-color" content="#151515">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calendário">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{
+  --bg:#151515;--card:#1f1f1e;--card2:#2a2a28;--line:#383836;--text:#f3f2ee;--muted:#a3a29b;--accent:#8e86f0;--danger:#f09595;
+  --violet-bg:#3C3489;--violet-tx:#CECBF6;--teal-bg:#085041;--teal-tx:#9FE1CB;--amber-bg:#633806;--amber-tx:#FAC775;
+  --red-bg:#791F1F;--red-tx:#F7C1C1;--pink-bg:#72243E;--pink-tx:#F4C0D1;--green-bg:#27500A;--green-tx:#C0DD97;
+  --blue-bg:#0C447C;--blue-tx:#B5D4F4;--gray-bg:#444441;--gray-tx:#D3D1C7;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f6f5f1;--card:#ffffff;--card2:#efeee8;--line:#dddbd2;--text:#1c1c1a;--muted:#6b6a64;--accent:#534AB7;--danger:#A32D2D;
+    --violet-bg:#EEEDFE;--violet-tx:#3C3489;--teal-bg:#E1F5EE;--teal-tx:#085041;--amber-bg:#FAEEDA;--amber-tx:#633806;
+    --red-bg:#FCEBEB;--red-tx:#791F1F;--pink-bg:#FBEAF0;--pink-tx:#72243E;--green-bg:#EAF3DE;--green-tx:#27500A;
+    --blue-bg:#E6F1FB;--blue-tx:#0C447C;--gray-bg:#F1EFE8;--gray-tx:#444441;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px}
+body{padding:env(safe-area-inset-top) 0 calc(76px + env(safe-area-inset-bottom));min-height:100vh}
+main{max-width:520px;margin:0 auto;padding:12px 14px}
+h1{font-size:22px;margin:0;font-weight:600}
+h2{font-size:15px;margin:22px 0 8px;font-weight:600;color:var(--muted)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;min-height:44px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.ghost{background:transparent;border-color:transparent}
+button.danger{color:var(--danger)}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+textarea{min-height:70px;resize:vertical}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1;min-width:0}
+.head{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.head h1{flex:1;text-transform:capitalize}
+.head button{min-width:44px;padding:8px 10px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wd{font-size:12px;color:var(--muted);text-align:center;padding:4px 0}
+.cell{min-height:56px;border-radius:10px;padding:5px 6px;font-size:14px;color:var(--muted);border:2px solid transparent;overflow:hidden;background:transparent;text-align:left;display:block;width:100%}
+.cell.has{color:var(--text)}
+.cell.today{border-color:var(--muted)}
+.cell.sel{border-color:var(--accent)}
+.cell small{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:clip;margin-top:2px}
+.dots{display:flex;gap:3px;margin-top:4px}
+.dots i{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.8}
+.c-violet{background:var(--violet-bg);color:var(--violet-tx)!important}
+.c-teal{background:var(--teal-bg);color:var(--teal-tx)!important}
+.c-amber{background:var(--amber-bg);color:var(--amber-tx)!important}
+.c-red{background:var(--red-bg);color:var(--red-tx)!important}
+.c-pink{background:var(--pink-bg);color:var(--pink-tx)!important}
+.c-green{background:var(--green-bg);color:var(--green-tx)!important}
+.c-blue{background:var(--blue-bg);color:var(--blue-tx)!important}
+.c-gray{background:var(--gray-bg);color:var(--gray-tx)!important}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:2px solid transparent;border-radius:10px;padding:6px 12px;font-size:14px;min-height:36px}
+.chip.on{border-color:var(--text)}
+.item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:6px;width:100%;text-align:left;min-height:52px}
+.item .bar{width:6px;align-self:stretch;border-radius:3px;flex:none;background:var(--gray-bg)}
+.item .tx{flex:1;min-width:0}
+.item .tx b{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .tx span{font-size:13px;color:var(--muted)}
+.item.done b{text-decoration:line-through;color:var(--muted)}
+.check{width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);flex:none;padding:0;min-height:0;background:transparent;display:flex;align-items:center;justify-content:center;font-size:14px}
+.check.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.empty{color:var(--muted);font-size:14px;padding:10px 2px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;border:0;border-radius:0;background:transparent;font-size:12px;color:var(--muted);padding:10px 0;min-height:56px}
+nav button.on{color:var(--accent);font-weight:600}
+nav button span{display:block;font-size:20px;line-height:22px}
+.quick{display:flex;gap:6px;margin:12px 0}
+.quick input{flex:1}
+.quick button{flex:none;min-width:48px;padding:8px}
+.sheetwrap{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:none;align-items:flex-end;justify-content:center}
+.sheetwrap.open{display:flex}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
+.sheet h3{margin:0 0 4px;font-size:18px}
+.seg{display:flex;background:var(--card2);border-radius:10px;padding:3px;margin-top:10px}
+.seg button{flex:1;border:0;background:transparent;min-height:38px;padding:6px}
+.seg button.on{background:var(--accent);color:#fff}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:20;max-width:88%;display:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+.card p{margin:0 0 10px;font-size:14px;color:var(--muted);line-height:1.45}
+.hide{display:none!important}
+.catrow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.catrow input{flex:1}
+.catrow select{flex:none;width:118px}
+.catrow button{flex:none;min-width:44px;padding:8px}
+.switch{display:flex;align-items:center;gap:10px;margin-top:12px}
+.switch input{width:22px;height:22px;min-height:0;flex:none}
+.switch span{font-size:15px}
+</style>
+</head>
+<body>
+
+<main id="auth" class="hide">
+  <h1 style="margin-top:40px">Calendário</h1>
+  <p style="color:var(--muted)">Entre para ver seus compromissos e tarefas.</p>
+  <label for="a-email">E-mail</label>
+  <input id="a-email" type="email" autocomplete="email" inputmode="email" placeholder="nome@email.com">
+  <label for="a-pass">Senha</label>
+  <input id="a-pass" type="password" autocomplete="current-password" placeholder="Mínimo de 6 caracteres">
+  <div class="row" style="margin-top:16px">
+    <button class="primary" id="a-in">Entrar</button>
+    <button id="a-up">Criar conta</button>
+  </div>
+  <p id="a-msg" style="color:var(--muted);font-size:14px"></p>
+</main>
+
+<main id="app" class="hide">
+  <section id="v-cal">
+    <div class="head">
+      <h1 id="m-title"></h1>
+      <button id="m-today">Hoje</button>
+      <button id="m-prev" aria-label="Mês anterior">‹</button>
+      <button id="m-next" aria-label="Próximo mês">›</button>
+    </div>
+    <div class="grid" id="m-grid"></div>
+    <div class="quick">
+      <input id="q-text" placeholder="Reunião sexta às 14h" enterkeyhint="done" aria-label="Adicionar rápido">
+      <button id="q-mic" aria-label="Falar">🎤</button>
+      <button id="q-add" class="primary" aria-label="Adicionar">+</button>
+    </div>
+    <h2 id="d-title"></h2>
+    <div class="chips" id="d-chips"></div>
+    <div id="d-list" style="margin-top:10px"></div>
+  </section>
+
+  <section id="v-agenda" class="hide">
+    <div class="head"><h1>Agenda</h1></div>
+    <div id="ag-list"></div>
+  </section>
+
+  <section id="v-tasks" class="hide">
+    <div class="head"><h1>Tarefas</h1><button class="primary" id="t-new">Nova</button></div>
+    <div id="t-list"></div>
+  </section>
+
+  <section id="v-set" class="hide">
+    <div class="head"><h1>Ajustes</h1></div>
+    <h2>Notificações</h2>
+    <div class="card">
+      <p id="n-status"></p>
+      <div class="row">
+        <button class="primary" id="n-on">Ativar notificações</button>
+        <button id="n-test">Enviar teste</button>
+      </div>
+    </div>
+    <h2>Categorias</h2>
+    <div class="card">
+      <div id="c-list"></div>
+      <button id="c-new" style="width:100%">Nova categoria</button>
+    </div>
+    <h2>Instalar no iPhone</h2>
+    <div class="card">
+      <p>Abra este endereço no Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início". Abra o app pelo ícone novo e ative as notificações aqui em Ajustes.</p>
+    </div>
+    <h2>Conta</h2>
+    <div class="card">
+      <p id="u-email"></p>
+      <button id="u-out" style="width:100%">Sair</button>
+    </div>
+  </section>
+</main>
+
+<nav id="nav" class="hide">
+  <button data-v="cal" class="on"><span>▦</span>Calendário</button>
+  <button data-v="agenda"><span>☰</span>Agenda</button>
+  <button data-v="tasks"><span>✓</span>Tarefas</button>
+  <button data-v="set"><span>⚙</span>Ajustes</button>
+</nav>
+
+<div class="sheetwrap" id="sheet">
+  <div class="sheet">
+    <h3 id="f-head">Novo</h3>
+    <div class="seg" id="f-seg">
+      <button data-k="event" class="on">Compromisso</button>
+      <button data-k="task">Tarefa</button>
+    </div>
+    <label for="f-title">Título</label>
+    <input id="f-title" placeholder="Reunião com a equipe">
+    <div id="f-catbox">
+      <label for="f-cat">Categoria</label>
+      <select id="f-cat"></select>
+    </div>
+    <label for="f-day" id="f-daylabel">Data</label>
+    <input id="f-day" type="date">
+    <div class="switch" id="f-allbox">
+      <input id="f-all" type="checkbox">
+      <span>Dia todo</span>
+    </div>
+    <div class="row" id="f-times">
+      <div><label for="f-start" id="f-startlabel">Início</label><input id="f-start" type="time"></div>
+      <div id="f-endbox"><label for="f-end">Fim</label><input id="f-end" type="time"></div>
+    </div>
+    <label for="f-remind">Lembrete</label>
+    <select id="f-remind"></select>
+    <label for="f-notes">Observações</label>
+    <textarea id="f-notes"></textarea>
+    <div class="row" style="margin-top:16px">
+      <button id="f-cancel">Cancelar</button>
+      <button class="primary" id="f-save">Salvar</button>
+    </div>
+    <button class="ghost danger hide" id="f-del" style="width:100%;margin-top:8px">Excluir</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB_URL = 'https://fwfuruwbotitrvrmxuan.supabase.co';
+const SB_KEY = 'sb_publishable_mdwyizua_LNs-4EwkKC_vg_FvhXQJLM';
+const COLORS = {violet:'Roxo',teal:'Verde-água',amber:'Âmbar',red:'Vermelho',pink:'Rosa',green:'Verde',blue:'Azul',gray:'Cinza'};
+const DEFAULT_CATS = [['Alcateia','violet'],['Prefeitura','teal'],['Revisão','amber'],['Prova','red'],['Inspire','pink'],['Livre','green']];
+const WD = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const fromYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const hm = t => t ? t.slice(0, 5) : '';
+const plain = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+let sb = null;
+const S = { user: null, cats: [], events: [], tasks: [], view: 'cal', month: new Date(), sel: ymd(new Date()), edit: null, kind: 'event' };
+S.month = new Date(S.month.getFullYear(), S.month.getMonth(), 1);
+
+let toastTimer;
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.style.display = 'block';
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = 'none', 3800);
+}
+async function run(p) {
+  const { data, error } = await p;
+  if (error) { toast('Não deu certo: ' + error.message); throw error; }
+  return data;
+}
+function saveCache() {
+  try { localStorage.setItem('cal-cache', JSON.stringify({ cats: S.cats, events: S.events, tasks: S.tasks })); } catch (e) {}
+}
+function loadCache() {
+  try { const c = JSON.parse(localStorage.getItem('cal-cache') || 'null'); if (c) { S.cats = c.cats || []; S.events = c.events || []; S.tasks = c.tasks || []; } } catch (e) {}
+}
+
+function dayLabel(s) {
+  const d = fromYmd(s), t = ymd(new Date()), tm = new Date(); tm.setDate(tm.getDate() + 1);
+  const base = WD[d.getDay()].slice(0, 3) + ', ' + d.getDate() + ' de ' + MONTHS[d.getMonth()];
+  if (s === t) return 'Hoje · ' + base;
+  if (s === ymd(tm)) return 'Amanhã · ' + base;
+  return base;
+}
+const catOf = id => S.cats.find(c => c.id === id);
+const isMarker = e => !e.start_time && e.category_id && catOf(e.category_id) && catOf(e.category_id).name === e.title;
+
+/* ---------- lembretes ---------- */
+function remindOptions(hasDay, hasTime) {
+  if (!hasDay) return [['', 'Sem lembrete']];
+  if (hasTime) return [['', 'Sem lembrete'], ['m0', 'Na hora'], ['m10', '10 minutos antes'], ['m30', '30 minutos antes'], ['m60', '1 hora antes'], ['m1440', '1 dia antes']];
+  return [['', 'Sem lembrete'], ['d8', 'No dia, às 8h'], ['v20', 'Na véspera, às 20h']];
+}
+function computeRemind(day, time, rule) {
+  if (!day || !rule) return null;
+  const d = fromYmd(day);
+  if (rule[0] === 'm' && time) {
+    const [h, mi] = time.split(':').map(Number);
+    d.setHours(h, mi, 0, 0);
+    return new Date(d.getTime() - Number(rule.slice(1)) * 60000).toISOString();
+  }
+  if (rule === 'd8') { d.setHours(8, 0, 0, 0); return d.toISOString(); }
+  if (rule === 'v20') { d.setDate(d.getDate() - 1); d.setHours(20, 0, 0, 0); return d.toISOString(); }
+  return null;
+}
+function deriveRule(day, time, remindAt) {
+  if (!remindAt || !day) return '';
+  const target = new Date(remindAt).getTime();
+  for (const [rule] of remindOptions(true, !!time)) {
+    const c = computeRemind(day, time, rule);
+    if (c && Math.abs(new Date(c).getTime() - target) < 60000) return rule;
+  }
+  return 'keep';
+}
+
+/* ---------- dados ---------- */
+async function loadAll() {
+  const from = new Date(); from.setMonth(from.getMonth() - 6);
+  const [cats, events, tasks] = await Promise.all([
+    run(sb.from('categories').select('*').order('sort').order('created_at')),
+    run(sb.from('events').select('*').gte('day', ymd(from)).order('day').order('start_time', { nullsFirst: true }).limit(3000)),
+    run(sb.from('tasks').select('*').order('done').order('due_day', { nullsFirst: false }).order('created_at').limit(1000))
+  ]);
+  S.cats = cats; S.events = events; S.tasks = tasks;
+  if (!S.cats.length) {
+    S.cats = await run(sb.from('categories').insert(DEFAULT_CATS.map(([name, color], i) => ({ name, color, sort: i }))).select());
+  }
+  saveCache(); render();
+}
+
+/* ---------- telas ---------- */
+function render() {
+  ['cal', 'agenda', 'tasks', 'set'].forEach(v => $('v-' + v).classList.toggle('hide', S.view !== v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === S.view));
+  if (S.view === 'cal') renderCal();
+  if (S.view === 'agenda') renderAgenda();
+  if (S.view === 'tasks') renderTasks();
+  if (S.view === 'set') renderSet();
+}
+
+function renderCal() {
+  const y = S.month.getFullYear(), m = S.month.getMonth();
+  $('m-title').textContent = MONTHS[m] + ' ' + y;
+  const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), offset = (first.getDay() + 6) % 7;
+  const today = ymd(new Date());
+  const byDay = {};
+  S.events.forEach(e => (byDay[e.day] = byDay[e.day] || []).push(e));
+  const taskDay = {};
+  S.tasks.forEach(t => { if (t.due_day && !t.done) taskDay[t.due_day] = (taskDay[t.due_day] || 0) + 1; });
+  let h = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'].map(d => '<div class="wd">' + d + '</div>').join('');
+  for (let i = 0; i < offset; i++) h += '<div></div>';
+  for (let d = 1; d <= days; d++) {
+    const key = y + '-' + pad(m + 1) + '-' + pad(d);
+    const evs = byDay[key] || [];
+    const allDay = evs.find(e => !e.start_time && e.category_id && catOf(e.category_id)) || evs.find(e => !e.start_time);
+    const cat = allDay && catOf(allDay.category_id);
+    const others = evs.filter(e => e !== allDay).length + (taskDay[key] || 0);
+    const cls = ['cell'];
+    if (cat) cls.push('c-' + cat.color);
+    if (evs.length || taskDay[key]) cls.push('has');
+    if (key === today) cls.push('today');
+    if (key === S.sel) cls.push('sel');
+    h += '<button class="' + cls.join(' ') + '" data-day="' + key + '">' + d +
+      (allDay ? '<small>' + esc(allDay.title) + '</small>' : '') +
+      (others ? '<div class="dots">' + '<i></i>'.repeat(Math.min(others, 4)) + '</div>' : '') + '</button>';
+  }
+  $('m-grid').innerHTML = h;
+  renderDay();
+}
+
+function itemHtml(kind, o) {
+  if (kind === 'event') {
+    const cat = catOf(o.category_id);
+    const when = o.start_time ? hm(o.start_time) + (o.end_time ? ' – ' + hm(o.end_time) : '') : 'Dia todo';
+    return '<button class="item" data-ev="' + o.id + '"><span class="bar' + (cat ? ' c-' + cat.color : '') + '"></span><span class="tx"><b>' + esc(o.title) +
+      '</b><span>' + when + (cat ? ' · ' + esc(cat.name) : '') + (o.remind_at ? ' · 🔔' : '') + '</span></span></button>';
+  }
+  const due = o.due_day ? dayLabel(o.due_day) + (o.due_time ? ' às ' + hm(o.due_time) : '') : 'Sem prazo';
+  return '<div class="item' + (o.done ? ' done' : '') + '"><button class="check' + (o.done ? ' on' : '') + '" data-chk="' + o.id + '" aria-label="Concluir">' + (o.done ? '✓' : '') +
+    '</button><button class="tx ghost" data-tk="' + o.id + '" style="text-align:left;padding:0;min-height:0"><b>' + esc(o.title) + '</b><span>' + due + (o.remind_at && !o.done ? ' · 🔔' : '') + '</span></button></div>';
+}
+
+function renderDay() {
+  $('d-title').textContent = dayLabel(S.sel);
+  const evs = S.events.filter(e => e.day === S.sel);
+  const marker = evs.find(isMarker);
+  $('d-chips').innerHTML = S.cats.map(c => '<button class="chip c-' + c.color + (marker && marker.category_id === c.id ? ' on' : '') + '" data-mark="' + c.id + '">' + esc(c.name) + '</button>').join('');
+  const tks = S.tasks.filter(t => t.due_day === S.sel);
+  const list = evs.filter(e => !isMarker(e)).map(e => itemHtml('event', e)).concat(tks.map(t => itemHtml('task', t)));
+  $('d-list').innerHTML = list.join('') || '<div class="empty">Nada marcado. Toque numa categoria para pintar o dia ou em + para criar um compromisso.</div>';
+}
+
+function renderAgenda() {
+  const today = ymd(new Date());
+  const rows = [];
+  S.events.filter(e => e.day >= today).forEach(e => rows.push([e.day, e.start_time || '', 'event', e]));
+  S.tasks.filter(t => !t.done && t.due_day && t.due_day >= today).forEach(t => rows.push([t.due_day, t.due_time || '', 'task', t]));
+  rows.sort((a, b) => (a[0] + a[1]).localeCompare(b[0] + b[1]));
+  let h = '', last = '';
+  rows.slice(0, 200).forEach(([day, , kind, o]) => {
+    if (day !== last) { h += '<h2>' + dayLabel(day) + '</h2>'; last = day; }
+    h += itemHtml(kind, o);
+  });
+  $('ag-list').innerHTML = h || '<div class="empty">Sua agenda está livre. Crie um compromisso pelo calendário.</div>';
+}
+
+function renderTasks() {
+  const open = S.tasks.filter(t => !t.done), done = S.tasks.filter(t => t.done).slice(0, 30);
+  open.sort((a, b) => ((a.due_day || '9999') + (a.due_time || '')).localeCompare((b.due_day || '9999') + (b.due_time || '')));
+  let h = open.map(t => itemHtml('task', t)).join('') || '<div class="empty">Nenhuma tarefa pendente. Toque em Nova para criar a primeira.</div>';
+  if (done.length) h += '<h2>Concluídas</h2>' + done.map(t => itemHtml('task', t)).join('');
+  $('t-list').innerHTML = h;
+}
+
+function renderSet() {
+  $('u-email').textContent = S.user ? S.user.email : '';
+  $('c-list').innerHTML = S.cats.map(c => '<div class="catrow"><input value="' + esc(c.name) + '" data-cname="' + c.id + '" aria-label="Nome da categoria"><select data-ccolor="' + c.id + '" class="c-' + c.color + '" aria-label="Cor">' +
+    Object.entries(COLORS).map(([k, v]) => '<option value="' + k + '"' + (k === c.color ? ' selected' : '') + '>' + v + '</option>').join('') +
+    '</select><button data-cdel="' + c.id + '" class="danger" aria-label="Excluir categoria">✕</button></div>').join('');
+  pushStatus();
+}
+
+/* ---------- editor ---------- */
+function fillRemind(selected) {
+  const hasDay = !!$('f-day').value, hasTime = S.kind === 'event' ? !$('f-all').checked && !!$('f-start').value : !!$('f-start').value;
+  const opts = remindOptions(hasDay, hasTime);
+  if (selected === 'keep') opts.push(['keep', 'Manter o lembrete atual']);
+  $('f-remind').innerHTML = opts.map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('');
+  $('f-remind').value = opts.some(o => o[0] === selected) ? selected : '';
+  $('f-remind').disabled = !hasDay;
+}
+function setKind(k) {
+  S.kind = k;
+  document.querySelectorAll('#f-seg button').forEach(b => b.classList.toggle('on', b.dataset.k === k));
+  $('f-catbox').classList.toggle('hide', k !== 'event');
+  $('f-allbox').classList.toggle('hide', k !== 'event');
+  $('f-endbox').classList.toggle('hide', k !== 'event');
+  $('f-daylabel').textContent = k === 'event' ? 'Data' : 'Prazo (opcional)';
+  $('f-startlabel').textContent = k === 'event' ? 'Início' : 'Hora (opcional)';
+  $('f-times').classList.toggle('hide', k === 'event' && $('f-all').checked);
+}
+function openEditor(kind, o, draft) {
+  S.edit = o ? { kind, id: o.id, remind_at: o.remind_at } : null;
+  const v = o || draft || {};
+  $('f-head').textContent = o ? (kind === 'event' ? 'Editar compromisso' : 'Editar tarefa') : 'Novo';
+  $('f-seg').classList.toggle('hide', !!o);
+  $('f-del').classList.toggle('hide', !o);
+  $('f-title').value = v.title || '';
+  $('f-cat').innerHTML = '<option value="">Sem categoria</option>' + S.cats.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
+  $('f-cat').value = v.category_id || '';
+  const day = kind === 'event' ? (v.day || S.sel) : (v.due_day || '');
+  const time = kind === 'event' ? v.start_time : v.due_time;
+  $('f-day').value = day;
+  $('f-all').checked = kind === 'event' && !time;
+  $('f-start').value = hm(time);
+  $('f-end').value = hm(v.end_time);
+  $('f-notes').value = v.notes || '';
+  setKind(kind);
+  fillRemind(o ? deriveRule(day, hm(time), o.remind_at) : (v.rule || ''));
+  $('sheet').classList.add('open');
+  if (!o && !draft) setTimeout(() => $('f-title').focus(), 50);
+}
+function closeEditor() { $('sheet').classList.remove('open'); S.edit = null; }
+
+async function saveEditor() {
+  const title = $('f-title').value.trim();
+  if (!title) { toast('Dê um título primeiro'); $('f-title').focus(); return; }
+  const day = $('f-day').value || null;
+  const isEvent = S.kind === 'event';
+  if (isEvent && !day) { toast('Escolha uma data'); return; }
+  const time = (isEvent && $('f-all').checked) ? null : ($('f-start').value || null);
+  const rule = $('f-remind').value;
+  let remind = rule === 'keep' && S.edit ? S.edit.remind_at : computeRemind(day, time, rule);
+  const row = { title, notes: $('f-notes').value.trim() || null, remind_at: remind };
+  if (!S.edit || S.edit.remind_at !== remind) row.notified_at = null;
+  if (isEvent) Object.assign(row, { day, start_time: time, end_time: time ? ($('f-end').value || null) : null, category_id: $('f-cat').value || null });
+  else Object.assign(row, { due_day: day, due_time: day ? time : null });
+  const table = isEvent ? 'events' : 'tasks';
+  $('f-save').disabled = true;
+  try {
+    if (S.edit) await run(sb.from(table).update(row).eq('id', S.edit.id));
+    else await run(sb.from(table).insert(row));
+    if (isEvent && day) { S.sel = day; const d = fromYmd(day); S.month = new Date(d.getFullYear(), d.getMonth(), 1); }
+    closeEditor();
+    await loadAll();
+    toast(remind && new Date(remind) > new Date() ? 'Salvo, com lembrete' : 'Salvo');
+  } finally { $('f-save').disabled = false; }
+}
+
+async function toggleMarker(catId) {
+  const cat = catOf(catId); if (!cat) return;
+  const markers = S.events.filter(e => e.day === S.sel && isMarker(e));
+  const same = markers.find(e => e.category_id === catId);
+  if (markers.length) await run(sb.from('events').delete().in('id', markers.map(e => e.id)));
+  if (!same) await run(sb.from('events').insert({ title: cat.name, category_id: catId, day: S.sel }));
+  await loadAll();
+}
+
+/* ---------- adicionar rápido e voz ---------- */
+function parseQuick(text) {
+  let s = ' ' + text.trim() + ' ';
+  const out = { kind: 'event' };
+  const cut = (re, fn) => { const m = s.match(re); if (m) { s = s.replace(m[0], ' '); if (fn) fn(m); } return !!m; };
+  const wantsRemind = /lembr/i.test(s);
+  if (cut(/^\s*(?:criar?|adicionar?|nova)?\s*(?:tarefa|lembrete)\s*(?:de|para|pra)?[:,]?\s+/i) ||
+      cut(/^\s*(?:me\s+)?(?:lembr(?:ar|a|e)(?:-me)?)\s*(?:de|para|pra)?\s+/i)) out.kind = 'task';
+  cut(/^\s*(?:agendar?|marcar?|criar?|adicionar?|colocar?|coloca|bota|botar)\s+(?:um\s+|uma\s+)?(?:compromisso|evento|reuni[ãa]o(?=\s+de\s))?\s*/i);
+
+  let h = null, mi = 0;
+  if (cut(/(?:^|\s)(?:(?:[àa]s?|ao)\s+)?meio[- ]dia(?=\s)/i)) h = 12;
+  else if (cut(/(?:^|\s)(?:[àa]\s+)?meia[- ]noite(?=\s)/i)) h = 0;
+  else if (!cut(/(?:^|\s)(?:[àa]s?\s+)?(\d{1,2}):(\d{2})(?=\s)/i, m => { h = +m[1]; mi = +m[2]; }))
+    if (!cut(/(?:^|\s)(?:[àa]s?\s+)?(\d{1,2})\s*h(?:oras?|rs?)?\s*(?:e\s+)?(\d{2})?(?:\s*min(?:utos)?)?(?=\s)/i, m => { h = +m[1]; mi = +(m[2] || 0); }))
+      cut(/\s[àa]s\s+(\d{1,2})(?=\s)/i, m => { h = +m[1]; });
+  if (h !== null) {
+    if (cut(/\s(?:da|de)\s+(?:tarde|noite)(?=\s)/i) && h < 12) h += 12;
+    cut(/\s(?:da|de)\s+manh[ãa](?=\s)/i);
+    if (h > 23 || mi > 59) h = null;
+  }
+  if (h !== null) out.time = pad(h) + ':' + pad(mi);
+
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  let d = null;
+  const monthIdx = name => MONTHS.findIndex(m => plain(m).startsWith(plain(name).slice(0, 3)));
+  const fix = (day, month, year) => {
+    let dt = new Date(year ?? now.getFullYear(), month, day);
+    if (year == null && dt < now) dt = new Date(now.getFullYear() + 1, month, day);
+    return dt;
+  };
+  const MRE = 'janeiro|fevereiro|mar[çc]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro';
+  if (cut(/\sdepois\s+de\s+amanh[ãa](?=\s)/i)) { d = new Date(now); d.setDate(d.getDate() + 2); }
+  else if (cut(/\samanh[ãa](?=\s)/i)) { d = new Date(now); d.setDate(d.getDate() + 1); }
+  else if (cut(/\shoje(?=\s)/i)) d = new Date(now);
+  else if (cut(/\s(?:(?:no\s+)?dia\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?=\s)/i, m => { d = fix(+m[1], +m[2] - 1, m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : null); })) {}
+  else if (cut(new RegExp('\\s(?:(?:no\\s+)?dia\\s+)?(\\d{1,2})\\s+de\\s+(' + MRE + ')(?:\\s+de\\s+(\\d{4}))?(?=\\s)', 'i'), m => { d = fix(+m[1], monthIdx(m[2]), m[3] ? +m[3] : null); })) {}
+  else if (cut(/\s(?:no\s+)?dia\s+(\d{1,2})(?=\s)/i, m => {
+    d = new Date(now.getFullYear(), now.getMonth(), +m[1]);
+    if (d < now) d = new Date(now.getFullYear(), now.getMonth() + 1, +m[1]);
+  })) {}
+  else cut(/\s(?:n[ao]\s+|(?:pr[óo]xim[ao]|ness[ae]|est[ae])\s+)?(domingo|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado)(?:-feira|\s+feira)?(?:\s+que\s+vem)?(?=\s)/i, m => {
+    const target = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'].indexOf(plain(m[1]).slice(0, 3));
+    let diff = (target - now.getDay() + 7) % 7; if (diff === 0) diff = 7;
+    d = new Date(now); d.setDate(d.getDate() + diff);
+  });
+  if (d && !isNaN(d)) out.day = ymd(d);
+
+  let title = s.replace(/\s+/g, ' ').trim().replace(/^(?:de|do|da|no|na|em|para|pra|que|eu)\s+/i, '').replace(/\s+(?:de|do|da|no|na|em|para|pra|[àa]s?|dia)$/i, '').replace(/^[,.:;\s-]+|[,.:;\s-]+$/g, '');
+  out.title = title ? title[0].toUpperCase() + title.slice(1) : '';
+  const cat = S.cats.find(c => plain(' ' + text + ' ').includes(' ' + plain(c.name) + ' ')) || S.cats.find(c => plain(text).includes(plain(c.name)));
+  if (cat) out.category_id = cat.id;
+  if (out.kind === 'event') {
+    out.day = out.day || S.sel; out.start_time = out.time || null;
+    out.rule = out.time ? 'm10' : (wantsRemind ? 'd8' : '');
+  } else {
+    out.due_day = out.day || (out.time ? ymd(new Date()) : null); out.due_time = out.due_day ? (out.time || null) : null;
+    out.rule = out.due_day ? (out.due_time ? 'm0' : 'd8') : '';
+  }
+  return out;
+}
+function quickAdd() {
+  const text = $('q-text').value.trim();
+  if (!text) { openEditor('event', null, { day: S.sel }); return; }
+  const p = parseQuick(text);
+  $('q-text').value = '';
+  openEditor(p.kind, null, p);
+}
+let rec = null;
+function voice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { $('q-text').focus(); toast('Use o microfone do teclado para ditar e toque em +'); return; }
+  if (rec) { rec.stop(); return; }
+  try {
+    rec = new SR(); rec.lang = 'pt-BR'; rec.interimResults = true; rec.maxAlternatives = 1;
+    $('q-mic').classList.add('primary'); toast('Ouvindo… diga, por exemplo, "dentista quinta às 15h"');
+    let finalText = '';
+    rec.onresult = e => {
+      let t = ''; for (const r of e.results) t += r[0].transcript;
+      $('q-text').value = t; if (e.results[e.results.length - 1].isFinal) finalText = t;
+    };
+    rec.onerror = () => { toast('Não consegui ouvir. Use o microfone do teclado para ditar.'); };
+    rec.onend = () => { rec = null; $('q-mic').classList.remove('primary'); if (finalText || $('q-text').value.trim()) quickAdd(); };
+    rec.start();
+  } catch (e) { rec = null; $('q-mic').classList.remove('primary'); $('q-text').focus(); toast('Use o microfone do teclado para ditar e toque em +'); }
+}
+
+/* ---------- notificações ---------- */
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+async function pushStatus() {
+  const el = $('n-status');
+  if (!pushSupported()) {
+    el.textContent = /iphone|ipad/i.test(navigator.userAgent) && !standalone()
+      ? 'No iPhone, as notificações só funcionam com o app instalado na Tela de Início. Instale e abra pelo ícone.'
+      : 'Este navegador não oferece notificações push.';
+    return;
+  }
+  if (Notification.permission === 'denied') { el.textContent = 'As notificações estão bloqueadas para este app. Libere nos ajustes do aparelho.'; return; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    el.textContent = sub && Notification.permission === 'granted' ? 'Notificações ativas neste aparelho.' : 'Ative para receber os lembretes mesmo com o app fechado.';
+  } catch (e) { el.textContent = 'Ative para receber os lembretes mesmo com o app fechado.'; }
+}
+function b64ToBytes(b64) {
+  const p = '='.repeat((4 - b64.length % 4) % 4), raw = atob((b64 + p).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+}
+async function enablePush() {
+  if (!pushSupported()) { pushStatus(); toast('Instale o app na Tela de Início primeiro'); return; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { pushStatus(); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const res = await fetch(SB_URL + '/functions/v1/push', { headers: { apikey: SB_KEY } });
+    const { publicKey } = await res.json();
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(publicKey) });
+    const j = sub.toJSON();
+    await run(sb.from('push_subscriptions').upsert({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }, { onConflict: 'endpoint' }));
+    toast('Notificações ativadas');
+  } catch (e) { toast('Não deu para ativar: ' + (e.message || e)); }
+  pushStatus();
+}
+async function testPush() {
+  await run(sb.from('tasks').insert({ title: 'Teste de notificação', due_day: ymd(new Date()), remind_at: new Date().toISOString() }));
+  await loadAll();
+  toast('Teste criado. A notificação chega em até 1 minuto.');
+}
+
+/* ---------- eventos de tela ---------- */
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button,[data-day]'); if (!t) return;
+  const d = t.dataset;
+  if (d.v) { S.view = d.v; render(); window.scrollTo(0, 0); }
+  else if (d.day) { S.sel = d.day; renderCal(); }
+  else if (d.mark) await toggleMarker(d.mark);
+  else if (d.ev) openEditor('event', S.events.find(x => x.id === d.ev));
+  else if (d.tk) openEditor('task', S.tasks.find(x => x.id === d.tk));
+  else if (d.chk) {
+    const tk = S.tasks.find(x => x.id === d.chk);
+    await run(sb.from('tasks').update({ done: !tk.done }).eq('id', tk.id)); await loadAll();
+  }
+  else if (d.k) { setKind(d.k); fillRemind($('f-remind').value); }
+  else if (d.cdel) {
+    if (confirm('Excluir esta categoria? Os compromissos dela ficam sem categoria.')) { await run(sb.from('categories').delete().eq('id', d.cdel)); await loadAll(); }
+  }
+});
+document.addEventListener('change', async e => {
+  const d = e.target.dataset;
+  if (d.cname) { const v = e.target.value.trim(); if (v) { await run(sb.from('categories').update({ name: v }).eq('id', d.cname)); await loadAll(); } }
+  else if (d.ccolor) { await run(sb.from('categories').update({ color: e.target.value }).eq('id', d.ccolor)); await loadAll(); }
+  else if (['f-day', 'f-start', 'f-all'].includes(e.target.id)) {
+    if (e.target.id === 'f-all') $('f-times').classList.toggle('hide', S.kind === 'event' && $('f-all').checked);
+    fillRemind($('f-remind').value);
+  }
+});
+$('m-prev').onclick = () => { S.month = new Date(S.month.getFullYear(), S.month.getMonth() - 1, 1); renderCal(); };
+$('m-next').onclick = () => { S.month = new Date(S.month.getFullYear(), S.month.getMonth() + 1, 1); renderCal(); };
+$('m-today').onclick = () => { const n = new Date(); S.month = new Date(n.getFullYear(), n.getMonth(), 1); S.sel = ymd(n); renderCal(); };
+$('q-add').onclick = quickAdd;
+$('q-mic').onclick = voice;
+$('q-text').addEventListener('keydown', e => { if (e.key === 'Enter') quickAdd(); });
+$('t-new').onclick = () => openEditor('task', null, {});
+$('f-cancel').onclick = closeEditor;
+$('f-save').onclick = saveEditor;
+$('f-del').onclick = async () => {
+  if (!S.edit || !confirm('Excluir? Não dá para desfazer.')) return;
+  await run(sb.from(S.edit.kind === 'event' ? 'events' : 'tasks').delete().eq('id', S.edit.id));
+  closeEditor(); await loadAll();
+};
+$('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeEditor(); });
+$('c-new').onclick = async () => { await run(sb.from('categories').insert({ name: 'Nova categoria', color: 'blue', sort: S.cats.length })); await loadAll(); };
+$('n-on').onclick = enablePush;
+$('n-test').onclick = testPush;
+$('u-out').onclick = async () => { await sb.auth.signOut(); try { localStorage.removeItem('cal-cache'); } catch (e) {} };
+
+/* ---------- login ---------- */
+async function auth(mode) {
+  const email = $('a-email').value.trim(), password = $('a-pass').value;
+  if (!email || password.length < 6) { $('a-msg').textContent = 'Preencha o e-mail e uma senha com pelo menos 6 caracteres.'; return; }
+  $('a-msg').textContent = 'Aguarde…';
+  const { data, error } = mode === 'in' ? await sb.auth.signInWithPassword({ email, password }) : await sb.auth.signUp({ email, password });
+  if (error) $('a-msg').textContent = /confirm/i.test(error.message) ? 'Confirme sua conta pelo link enviado ao seu e-mail e entre de novo.' : (/invalid/i.test(error.message) ? 'E-mail ou senha incorretos.' : error.message);
+  else if (mode === 'up' && !data.session) $('a-msg').textContent = 'Conta criada. Confirme pelo link enviado ao seu e-mail e depois toque em Entrar.';
+  else $('a-msg').textContent = '';
+}
+$('a-in').onclick = () => auth('in');
+$('a-up').onclick = () => auth('up');
+
+function show(logged) {
+  $('auth').classList.toggle('hide', logged);
+  $('app').classList.toggle('hide', !logged);
+  $('nav').classList.toggle('hide', !logged);
+}
+
+function start() {
+  if (!window.supabase) { show(false); $('a-msg').textContent = 'Sem conexão. Abra de novo quando estiver online.'; return; }
+  sb = window.supabase.createClient(SB_URL, SB_KEY);
+  sb.auth.onAuthStateChange((evt, session) => {
+    const was = S.user && S.user.id;
+    S.user = session ? session.user : null;
+    show(!!S.user);
+    if (S.user && was !== S.user.id) { loadCache(); render(); setTimeout(() => loadAll().catch(() => {}), 0); }
+  });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user) loadAll().catch(() => {}); });
+}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+start();
+</script>
+</body>
+</html>
