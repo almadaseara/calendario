@@ -169,7 +169,7 @@ nav button span{display:block;font-size:20px;line-height:22px}
     <h2>Conta</h2>
     <div class="card">
       <p id="u-email"></p>
-      <p>Versão 4</p>
+      <p>Versão 5</p>
       <button id="u-out" style="width:100%">Sair</button>
     </div>
   </section>
@@ -546,10 +546,18 @@ function quickAdd() {
   $('q-text').value = '';
   openEditor(p.kind, null, p);
 }
-let rec = null;
+let rec = null, dictating = false, dictTimer;
+function dictInput() {
+  if (!dictating) return;
+  clearTimeout(dictTimer);
+  dictTimer = setTimeout(() => {
+    if (!dictating || !$('q-text').value.trim()) return;
+    dictating = false; $('q-text').blur(); quickAdd();
+  }, 2000);
+}
 function voice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR || isIOS()) { $('q-text').focus(); toast('Toque no microfone do teclado, fale a frase e depois toque em +'); return; }
+  if (!SR || isIOS()) { dictating = true; $('q-text').value = ''; $('q-text').focus(); toast('Toque no microfone do teclado e fale. O formulário abre sozinho quando você parar.'); return; }
   if (rec) { rec.stop(); return; }
   try {
     rec = new SR(); rec.lang = 'pt-BR'; rec.interimResults = true; rec.maxAlternatives = 1;
@@ -643,9 +651,11 @@ document.addEventListener('change', async e => {
 $('m-prev').onclick = () => { S.month = new Date(S.month.getFullYear(), S.month.getMonth() - 1, 1); renderCal(); };
 $('m-next').onclick = () => { S.month = new Date(S.month.getFullYear(), S.month.getMonth() + 1, 1); renderCal(); };
 $('m-today').onclick = () => { const n = new Date(); S.month = new Date(n.getFullYear(), n.getMonth(), 1); S.sel = ymd(n); renderCal(); };
-$('q-add').onclick = quickAdd;
+$('q-add').onclick = () => { dictating = false; clearTimeout(dictTimer); quickAdd(); };
 $('q-mic').onclick = voice;
-$('q-text').addEventListener('keydown', e => { if (e.key === 'Enter') quickAdd(); });
+$('q-text').addEventListener('keydown', e => { if (e.key === 'Enter') { dictating = false; quickAdd(); } });
+$('q-text').addEventListener('input', dictInput);
+$('q-text').addEventListener('blur', () => { setTimeout(() => { if (dictating && !$('q-text').value.trim()) dictating = false; }, 300); });
 $('t-new').onclick = () => openEditor('task', null, {});
 $('f-cancel').onclick = closeEditor;
 $('f-save').onclick = saveEditor;
