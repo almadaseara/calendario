@@ -548,7 +548,7 @@ function quickAdd() {
 let rec = null;
 function voice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { $('q-text').focus(); toast('Use o microfone do teclado para ditar e toque em +'); return; }
+  if (!SR || isIOS()) { $('q-text').focus(); toast('Toque no microfone do teclado, fale a frase e depois toque em +'); return; }
   if (rec) { rec.stop(); return; }
   try {
     rec = new SR(); rec.lang = 'pt-BR'; rec.interimResults = true; rec.maxAlternatives = 1;
@@ -567,14 +567,18 @@ function voice() {
 /* ---------- notificações ---------- */
 const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const pushSupported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function pushProblem() {
+  const yn = b => b ? 'sim' : 'não';
+  const v = (navigator.userAgent.match(/OS (\d+)[_.](\d+)/) || []).slice(1).join('.');
+  const diag = ' [app instalado: ' + yn(standalone()) + ' · service worker: ' + yn('serviceWorker' in navigator) + ' · push: ' + yn('PushManager' in window) + ' · avisos: ' + yn('Notification' in window) + (v ? ' · iOS ' + v : '') + ']';
+  if (!isIOS()) return 'Este navegador não oferece notificações push.' + diag;
+  if (!standalone()) return 'Você está no navegador. Abra o app pelo ícone da Tela de Início para ativar as notificações.' + diag;
+  return 'O app está instalado, mas o iPhone não liberou as notificações. Isso acontece com iOS anterior ao 16.4 ou quando o ícone foi criado por outro navegador que não o Safari.' + diag;
+}
 async function pushStatus() {
   const el = $('n-status');
-  if (!pushSupported()) {
-    el.textContent = /iphone|ipad/i.test(navigator.userAgent) && !standalone()
-      ? 'No iPhone, as notificações só funcionam com o app instalado na Tela de Início. Instale e abra pelo ícone.'
-      : 'Este navegador não oferece notificações push.';
-    return;
-  }
+  if (!pushSupported()) { el.textContent = pushProblem(); return; }
   if (Notification.permission === 'denied') { el.textContent = 'As notificações estão bloqueadas para este app. Libere nos ajustes do aparelho.'; return; }
   try {
     const reg = await navigator.serviceWorker.ready;
@@ -587,7 +591,7 @@ function b64ToBytes(b64) {
   return Uint8Array.from(raw, c => c.charCodeAt(0));
 }
 async function enablePush() {
-  if (!pushSupported()) { pushStatus(); toast('Instale o app na Tela de Início primeiro'); return; }
+  if (!pushSupported()) { pushStatus(); toast('Não deu para ativar. Veja o motivo no quadro de Notificações.'); return; }
   try {
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') { pushStatus(); return; }
