@@ -169,7 +169,7 @@ nav button span{display:block;font-size:20px;line-height:22px}
     <h2>Conta</h2>
     <div class="card">
       <p id="u-email"></p>
-      <p>Versão 8</p>
+      <p>Versão 9</p>
       <button id="u-upd" style="width:100%;margin-bottom:8px">Buscar atualização</button>
       <button id="u-out" style="width:100%">Sair</button>
     </div>
@@ -591,7 +591,50 @@ async function primeMic() {
   } catch (e) { recLog += 'M'; }
   await wait(350);
 }
+let sttOk = null, mr = null, mrState = 'idle', mrTimer = null;
+async function checkStt() {
+  try { const { data } = await sb.functions.invoke('transcrever', { method: 'GET' }); sttOk = !!(data && data.configured); }
+  catch (e) { sttOk = false; }
+}
+async function recordVoice() {
+  if (mrState === 'rec' && mr) { mr.stop(); return; }
+  if (mrState !== 'idle') return;
+  mrState = 'starting';
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { mrState = 'idle'; toast('Libere o microfone para este app nos Ajustes do iPhone.'); return; }
+  try {
+    const type = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+    const m = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+    const chunks = [];
+    m.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    m.onstop = async () => {
+      clearTimeout(mrTimer); mr = null; mrState = 'sending';
+      stream.getTracks().forEach(t => t.stop());
+      $('q-mic').classList.remove('primary');
+      const blob = new Blob(chunks, { type: m.mimeType || type || 'audio/mp4' });
+      try {
+        if (blob.size < 1500) { toast('Não ouvi nada. Toque no microfone e fale de novo.'); return; }
+        toast('Transcrevendo…');
+        const fd = new FormData();
+        fd.append('file', blob, 'fala.' + (/mp4|m4a|aac/.test(blob.type) ? 'm4a' : 'webm'));
+        fd.append('prompt', S.cats.map(c => c.name).join(', '));
+        const { data, error } = await sb.functions.invoke('transcrever', { body: fd });
+        if (error) throw error;
+        const text = String((data && data.text) || '').replace(/[.,;!?]+(?=\s|$)/g, ' ').trim();
+        if (!text) toast('Não entendi. Toque no microfone e fale de novo.');
+        else { $('q-text').value = text; quickAdd(); }
+      } catch (e) { toast('Não deu para transcrever agora. Tente de novo.'); }
+      finally { mrState = 'idle'; }
+    };
+    mr = m; mrState = 'rec'; m.start();
+    $('q-mic').classList.add('primary');
+    toast('Gravando… fale e toque no microfone de novo para terminar.');
+    mrTimer = setTimeout(() => { if (mr === m && mrState === 'rec') m.stop(); }, 15000);
+  } catch (e) { stream.getTracks().forEach(t => t.stop()); mrState = 'idle'; toast('Não deu para gravar neste aparelho.'); }
+}
 async function voice() {
+  if (sttOk && navigator.mediaDevices && window.MediaRecorder) { recordVoice(); return; }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { keyboardDictation(); return; }
   if (rec) { finishRec(); return; }
@@ -761,7 +804,7 @@ function start() {
     const was = S.user && S.user.id;
     S.user = session ? session.user : null;
     show(!!S.user);
-    if (S.user && was !== S.user.id) { loadCache(); render(); setTimeout(() => loadAll().catch(() => {}), 0); }
+    if (S.user && was !== S.user.id) { loadCache(); render(); setTimeout(() => { loadAll().catch(() => {}); checkStt(); }, 0); }
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user) loadAll().catch(() => {}); });
 }
