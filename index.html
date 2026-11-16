@@ -290,6 +290,9 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
 .mc.big em{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-style:normal;word-break:break-word;hyphens:auto}
 .mc.big u{display:block;text-decoration:none;font-weight:500;opacity:.85;margin-top:1px}
 #mv.listmode .expander{display:none}
+#m-title{cursor:pointer}
+.pop{max-height:calc(100vh - 140px);overflow:auto}
+.pop button{min-height:42px}
 </style>
 </head>
 <body class="th-glass">
@@ -317,12 +320,6 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
       </div>
     </div>
     <h1 id="m-title"></h1>
-    <div class="seg" id="cv-seg">
-      <button data-cv="day">Dia</button>
-      <button data-cv="3">3 dias</button>
-      <button data-cv="week">Semana</button>
-      <button data-cv="month">Mês</button>
-    </div>
     <div class="quick">
       <input id="q-text" class="field" placeholder="Academia toda segunda às 7h" enterkeyhint="done" aria-label="Adicionar rápido">
       <button id="q-mic" class="round" aria-label="Falar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
@@ -400,7 +397,7 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 18</p>
+      <p>Versão 19</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
@@ -463,6 +460,11 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
 </div>
 
 <div class="pop hide" id="m-menu" role="menu">
+  <button data-cv="day" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h5"/></svg><span>Dia</span></button>
+  <button data-cv="3" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M15 4v16"/></svg><span>3 dias</span></button>
+  <button data-cv="week" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7.5 4v16M12 4v16M16.5 4v16"/></svg><span>Semana</span></button>
+  <button data-cv="month" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17.5h.01M12 17.5h.01"/></svg><span>Mês</span></button>
+  <hr id="m-menu-sep">
   <button data-ms="compact" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="8.5" width="18" height="7" rx="3.5"/><path d="M8 8.5v7M12 8.5v7M16 8.5v7"/></svg><span>Compacto</span></button>
   <button data-ms="stacked" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="6.5" rx="3.25"/><rect x="3.5" y="13" width="17" height="6.5" rx="3.25"/></svg><span>Empilhado</span></button>
   <button data-ms="details" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M3.5 12h17M7 8h9M7 16h5"/></svg><span>Detalhes</span></button>
@@ -744,8 +746,10 @@ try { document.querySelectorAll('#m-menu [data-ms]').forEach(b => { MS_ICON[b.da
 const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 function syncMonth() { const d = fromYmd(S.sel); S.month = new Date(d.getFullYear(), d.getMonth(), 1); }
 function renderCal() {
-  $('m-style').classList.toggle('hide', S.calView !== 'month');
-  document.querySelectorAll('#cv-seg button').forEach(b => b.classList.toggle('on', b.dataset.cv === S.calView));
+  const isM = S.calView === 'month';
+  document.querySelectorAll('#m-menu [data-cv]').forEach(b => b.classList.toggle('on', b.dataset.cv === S.calView));
+  document.querySelectorAll('#m-menu [data-ms], #m-menu-sep, #m-menu hr:not(#m-menu-sep)').forEach(el => el.classList.toggle('hide', !isM));
+  if (!isM) $('m-style').innerHTML = (document.querySelector('#m-menu [data-cv="' + S.calView + '"] svg') || {}).outerHTML || '';
   const month = S.calView === 'month';
   $('mv').classList.toggle('hide', !month);
   $('tl').classList.toggle('hide', month);
@@ -1480,6 +1484,7 @@ document.addEventListener('click', async e => {
   const d = t.dataset;
   if (d.v) { S.view = d.v; if (d.v === 'cal' && S.calView !== 'month') S.tlScroll = true; render(); if (!(d.v === 'cal' && S.calView !== 'month')) window.scrollTo(0, 0); }
   else if (d.cv) {
+    $('m-menu').classList.add('hide');
     S.calView = d.cv;
     try { localStorage.setItem('cal-view', d.cv); } catch (err) {}
     if (d.cv === 'month') { syncMonth(); S.collapsed = false; renderCal(); window.scrollTo(0, 0); } else { S.tlScroll = true; renderCal(); }
@@ -1538,6 +1543,7 @@ function shift(dir) {
   renderCal();
 }
 $('m-expand').onclick = () => { S.collapsed = false; renderCal(); };
+$('m-title').onclick = () => { if (S.calView !== 'month') { S.calView = 'month'; syncMonth(); S.collapsed = true; try { localStorage.setItem('cal-view', 'month'); } catch (e) {} renderCal(); window.scrollTo(0, 0); } };
 let pullY = null;
 $('mv').addEventListener('touchstart', e => { pullY = e.target.closest('#m-grid,#m-expand') ? e.touches[0].clientY : null; }, { passive: true });
 $('mv').addEventListener('touchend', e => {
