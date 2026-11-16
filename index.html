@@ -11,6 +11,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Calendário">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
@@ -29,7 +32,7 @@
   }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:17px;-webkit-font-smoothing:antialiased}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:17px;-webkit-font-smoothing:antialiased}
 body{padding:env(safe-area-inset-top) 0 calc(64px + env(safe-area-inset-bottom));min-height:100vh}
 body.grouped{background:var(--bg2)}
 main{max-width:520px;margin:0 auto;padding:6px 16px 16px}
@@ -210,6 +213,23 @@ button.group.link{color:var(--accent)}
 .mc.task{color:var(--text);background:var(--fill)}
 .mc.task .ico{font-size:10px;color:var(--muted)}
 .more{display:block;font-style:normal;font-size:11px;font-weight:600;color:var(--muted);text-align:center;line-height:15px}
+/* tipografia arredondada, como no Calendário do iPhone */
+h1{font-weight:800;letter-spacing:-.6px}
+.top .year,.link{font-weight:600}
+.wdrow span{font-weight:700;color:var(--muted)}
+#m-grid .cell .num{font-weight:700;font-size:18px}
+.mc{font-weight:700}
+.seg button{font-weight:600}
+.ev .tx b{font-weight:600}
+.ev .tm b{font-weight:600}
+h2{font-weight:600}
+#d-title{font-weight:700}
+.chip{font-weight:600}
+nav button{font-weight:600}
+.btn{font-weight:600}
+.tlh b{font-weight:600}
+.blk b{font-weight:700}
+.shead h3{font-weight:700}
 </style>
 </head>
 <body>
@@ -319,7 +339,7 @@ button.group.link{color:var(--accent)}
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 15</p>
+      <p>Versão 16</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
