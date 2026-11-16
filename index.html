@@ -189,6 +189,27 @@ button.group.link{color:var(--accent)}
 .expander{display:block;width:100%;height:22px;margin:2px 0 4px}
 .expander span{display:block;width:38px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
 #m-grid.collapsed .mrow:not(.gone){max-height:96px}
+/* mês no estilo do Calendário do iPhone */
+#m-grid .mrow{gap:0;margin-bottom:0;max-height:132px;border-top:.5px solid var(--line)}
+#m-grid .mrow:first-child{border-top:0}
+#m-grid .mrow.gone{max-height:0;border-top-width:0}
+#m-grid .cell{min-height:118px;border-radius:0;padding:4px 0 4px;gap:2px;background:none}
+#m-grid .cell.we .num{color:var(--muted)}
+#m-grid .cell.on{background:var(--fill)}
+#m-grid .cell .num{font-size:17px;font-weight:600;width:30px;height:30px;line-height:30px;margin-bottom:2px}
+#m-grid .cell.we .num.sel,#m-grid .num.sel{color:var(--bg)}
+#m-grid .num.today{color:var(--accent)}
+#m-grid .num.today.sel{color:#fff}
+.mc{display:flex;align-items:center;gap:2px;margin:0 1px;font-size:10.5px;line-height:17px;height:17px;font-weight:600;border-radius:5px;padding:0 3px;white-space:nowrap;overflow:hidden;letter-spacing:-.2px;box-shadow:none!important;-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
+.mc .ico{flex:none;font-weight:700;font-size:9px;line-height:1;opacity:.9}
+.mc .ico:empty{display:none}
+.mc.timed{background:transparent!important}
+.mc.timed::before{content:"";flex:none;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:1px}
+.mc.mk{justify-content:center;font-weight:700}
+.mc.hol{color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.mc.task{color:var(--text);background:var(--fill)}
+.mc.task .ico{font-size:10px;color:var(--muted)}
+.more{display:block;font-style:normal;font-size:11px;font-weight:600;color:var(--muted);text-align:center;line-height:15px}
 </style>
 </head>
 <body>
@@ -298,7 +319,7 @@ button.group.link{color:var(--accent)}
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 14</p>
+      <p>Versão 15</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
@@ -661,17 +682,25 @@ function renderMonth() {
     const rest = evs.filter(e => e !== marker);
     const tks = taskDay[key] || [];
     const cls = ['cell'];
-    if (cat) cls.push('c-' + cat.color); else if ((offset + d - 1) % 7 >= 5) cls.push('we');
+    if ((offset + d - 1) % 7 >= 5) cls.push('we');
     if (key === S.sel) cls.push('on');
     const ncls = ['num'];
     if (key === today) ncls.push('today');
     if (key === S.sel) ncls.push('sel');
-    let lab = marker ? '<small>' + esc(marker.title) + '</small>' : (holiday(key) ? '<small class="hol">' + esc(holiday(key)) + '</small>' : '');
-    const chips = rest.map(e => { const c = catOf(e.category_id); return '<i class="mc ' + (c ? 'c-' + c.color : 'c-gray') + '">' + esc(e.title) + '</i>'; })
-      .concat(tks.map(t => '<i class="mc task">' + esc(t.title.replace(/^Estudo PC-BA:.*/, 'Estudo')) + '</i>'));
-    const max = marker || holiday(key) ? 1 : 2;
-    let ch = chips.slice(0, max).join('');
-    if (chips.length > max) ch += '<i class="more">+' + (chips.length - max) + '</i>';
+    const chips = [];
+    if (marker) chips.push('<i class="mc mk c-' + cat.color + '">' + esc(marker.title) + '</i>');
+    if (holiday(key)) chips.push('<i class="mc hol"><b class="ico">★</b>' + esc(holiday(key)) + '</i>');
+    rest.sort((a, b) => (a.start_time || '').localeCompare(b.start_time || '')).forEach(e => {
+      const c = catOf(e.category_id);
+      chips.push('<i class="mc c-' + (c ? c.color : 'gray') + (e.start_time ? ' timed' : '') + '"><b class="ico">' + (e.start_time ? '' : '▪') + '</b>' + esc(e.title) + '</i>');
+    });
+    tks.sort((a, b) => (a.due_time || '').localeCompare(b.due_time || '')).forEach(t => {
+      const name = /^Estudo PC-BA:/.test(t.title) ? 'Estudo: ' + t.title.replace(/^Estudo PC-BA:\s*/, '') : t.title;
+      chips.push('<i class="mc task"><b class="ico">○</b>' + esc(name) + '</i>');
+    });
+    const MAX = 3, shown = chips.length > MAX ? MAX - 1 : MAX;
+    let lab = '', ch = chips.slice(0, shown).join('');
+    if (chips.length > shown) ch += '<i class="more">+' + (chips.length - shown) + '</i>';
     cells.push('<button class="' + cls.join(' ') + '" data-day="' + key + '"><span class="' + ncls.join(' ') + '">' + d + '</span>' + lab + ch + '</button>');
   }
   while (cells.length % 7) cells.push('<div></div>');
