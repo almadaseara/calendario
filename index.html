@@ -266,6 +266,30 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
   body.th-glass #m-grid .cell.on{background:rgba(0,0,0,.05)}
   body.th-glass .mc.task{background:rgba(0,0,0,.05)}
 }
+/* estilos do mês: compacto, empilhado, detalhes, lista */
+.pop{position:fixed;right:12px;z-index:30;min-width:230px;padding:6px;border-radius:18px;background:rgba(44,44,46,.82);-webkit-backdrop-filter:blur(30px) saturate(170%);backdrop-filter:blur(30px) saturate(170%);box-shadow:0 12px 40px rgba(0,0,0,.35),inset 0 0 0 .5px rgba(255,255,255,.1);color:#fff}
+.pop button{display:flex;align-items:center;gap:10px;width:100%;min-height:46px;padding:0 14px 0 8px;border-radius:12px;font-size:17px;font-weight:500}
+.pop button:active{background:rgba(255,255,255,.1)}
+.pop .ck{width:18px;font-size:15px;text-align:center;visibility:hidden}
+.pop button.on .ck{visibility:visible}
+.pop hr{border:0;border-top:.5px solid rgba(255,255,255,.18);margin:4px 10px}
+@media (prefers-color-scheme: light){.pop{background:rgba(250,250,252,.85);color:#000;box-shadow:0 12px 40px rgba(0,0,0,.18),inset 0 0 0 .5px rgba(0,0,0,.08)}.pop button:active{background:rgba(0,0,0,.06)}.pop hr{border-top-color:rgba(0,0,0,.12)}}
+#m-grid.ms-compact .mrow,#m-grid.ms-list .mrow{max-height:74px}
+#m-grid.ms-compact .mrow.gone,#m-grid.ms-list .mrow.gone{max-height:0}
+#m-grid.ms-compact .cell,#m-grid.ms-list .cell{min-height:66px;align-items:center}
+.mbar{display:block;width:26px;height:5px;border-radius:3px;background:var(--h,currentColor)!important;margin-top:1px}
+.mbar[class*="c-"]{box-shadow:none!important}
+.dots3{display:flex;gap:3px;justify-content:center;margin-top:4px}
+.dots3 i{width:6px;height:6px;border-radius:50%;background:var(--h,var(--muted))!important;box-shadow:none!important}
+.dots3 i.hd{background:var(--accent)!important}
+.dots3 i.td{background:transparent!important;box-shadow:inset 0 0 0 1.2px var(--muted)!important}
+#m-grid.ms-details .mrow{max-height:180px}
+#m-grid.ms-details .mrow.gone{max-height:0}
+#m-grid.ms-details .cell{min-height:150px}
+.mc.big{display:block;height:auto;line-height:13px;padding:3px 4px;-webkit-mask-image:none;mask-image:none;white-space:normal}
+.mc.big em{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-style:normal;word-break:break-word;hyphens:auto}
+.mc.big u{display:block;text-decoration:none;font-weight:500;opacity:.85;margin-top:1px}
+#mv.listmode .expander{display:none}
 </style>
 </head>
 <body class="th-glass">
@@ -288,6 +312,7 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
         <button class="link" id="m-today">Hoje</button>
         <button class="ic" id="m-prev" aria-label="Anterior">‹</button>
         <button class="ic" id="m-next" aria-label="Próximo">›</button>
+        <button class="ic" id="m-style" aria-label="Estilo do mês"></button>
         <button class="ic" id="q-plus" aria-label="Novo evento">+</button>
       </div>
     </div>
@@ -375,7 +400,7 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 17</p>
+      <p>Versão 18</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
@@ -437,6 +462,13 @@ body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent
   </div>
 </div>
 
+<div class="pop hide" id="m-menu" role="menu">
+  <button data-ms="compact" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="8.5" width="18" height="7" rx="3.5"/><path d="M8 8.5v7M12 8.5v7M16 8.5v7"/></svg><span>Compacto</span></button>
+  <button data-ms="stacked" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="6.5" rx="3.25"/><rect x="3.5" y="13" width="17" height="6.5" rx="3.25"/></svg><span>Empilhado</span></button>
+  <button data-ms="details" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M3.5 12h17M7 8h9M7 16h5"/></svg><span>Detalhes</span></button>
+  <hr>
+  <button data-ms="list" role="menuitemradio"><b class="ck">✓</b><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4.5" y="3.5" width="15" height="8" rx="2.5"/><path d="M4.5 15h15M4.5 18.5h15"/></svg><span>Lista</span></button>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -457,8 +489,9 @@ const hm = t => t ? t.slice(0, 5) : '';
 const plain = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 let sb = null;
-const S = { user: null, cats: [], events: [], tasks: [], view: 'cal', calView: 'month', tlScroll: false, month: new Date(), sel: ymd(new Date()), edit: null, kind: 'event' };
+const S = { user: null, cats: [], events: [], tasks: [], view: 'cal', calView: 'month', mstyle: 'stacked', tlScroll: false, month: new Date(), sel: ymd(new Date()), edit: null, kind: 'event' };
 S.month = new Date(S.month.getFullYear(), S.month.getMonth(), 1);
+try { const st = localStorage.getItem('cal-mstyle'); if (['compact', 'stacked', 'details', 'list'].includes(st)) S.mstyle = st; } catch (e) {}
 try { const cv = localStorage.getItem('cal-view'); if (['day', '3', 'week', 'month'].includes(cv)) { S.calView = cv; S.tlScroll = cv !== 'month'; } } catch (e) {}
 
 let toastTimer;
@@ -706,9 +739,12 @@ function render() {
 }
 
 const HOUR = 48;
+const MS_ICON = {};
+try { document.querySelectorAll('#m-menu [data-ms]').forEach(b => { MS_ICON[b.dataset.ms] = b.querySelector('svg').outerHTML; }); } catch (e) {}
 const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 function syncMonth() { const d = fromYmd(S.sel); S.month = new Date(d.getFullYear(), d.getMonth(), 1); }
 function renderCal() {
+  $('m-style').classList.toggle('hide', S.calView !== 'month');
   document.querySelectorAll('#cv-seg button').forEach(b => b.classList.toggle('on', b.dataset.cv === S.calView));
   const month = S.calView === 'month';
   $('mv').classList.toggle('hide', !month);
@@ -728,6 +764,10 @@ function renderMonth() {
   const taskDay = {};
   S.tasks.forEach(t => { if (t.due_day && !t.done) (taskDay[t.due_day] = taskDay[t.due_day] || []).push(t); });
   const selRow = Math.floor((offset + fromYmd(S.sel).getDate() - 1) / 7);
+  const ms = S.mstyle;
+  $('m-grid').className = 'ms-' + ms;
+  $('m-style').innerHTML = MS_ICON[ms];
+  document.querySelectorAll('#m-menu [data-ms]').forEach(b => b.classList.toggle('on', b.dataset.ms === ms));
   const cells = [];
   for (let i = 0; i < offset; i++) cells.push('<div></div>');
   for (let d = 1; d <= days; d++) {
@@ -754,9 +794,26 @@ function renderMonth() {
       const name = /^Estudo PC-BA:/.test(t.title) ? 'Estudo: ' + t.title.replace(/^Estudo PC-BA:\s*/, '') : t.title;
       chips.push('<i class="mc task"><b class="ico">○</b>' + esc(name) + '</i>');
     });
-    const MAX = 3, shown = chips.length > MAX ? MAX - 1 : MAX;
-    let lab = '', ch = chips.slice(0, shown).join('');
-    if (chips.length > shown) ch += '<i class="more">+' + (chips.length - shown) + '</i>';
+    let lab = '', ch = '';
+    if (ms === 'compact' || ms === 'list') {
+      if (marker) lab = '<i class="mbar c-' + cat.color + '"></i>';
+      const dots = [];
+      if (holiday(key)) dots.push('<i class="hd"></i>');
+      rest.forEach(e => { const c = catOf(e.category_id); dots.push('<i class="c-' + (c ? c.color : 'gray') + '"></i>'); });
+      tks.forEach(() => dots.push('<i class="td"></i>'));
+      if (dots.length) ch = '<span class="dots3">' + dots.slice(0, 3).join('') + '</span>';
+    } else {
+      if (ms === 'details') {
+        chips.length = 0;
+        if (marker) chips.push('<i class="mc mk c-' + cat.color + '">' + esc(marker.title) + '</i>');
+        if (holiday(key)) chips.push('<i class="mc hol"><b class="ico">★</b>' + esc(holiday(key)) + '</i>');
+        rest.forEach(e => { const c = catOf(e.category_id); chips.push('<i class="mc big c-' + (c ? c.color : 'gray') + '"><em>' + esc(e.title) + '</em>' + (e.start_time ? '<u>' + hm(e.start_time) + '</u>' : '') + '</i>'); });
+        tks.forEach(t => { const name = /^Estudo PC-BA:/.test(t.title) ? 'Estudo: ' + t.title.replace(/^Estudo PC-BA:\s*/, '') : t.title; chips.push('<i class="mc big task"><em>○ ' + esc(name) + '</em>' + (t.due_time ? '<u>' + hm(t.due_time) + '</u>' : '') + '</i>'); });
+      }
+      const MAX = ms === 'details' ? 4 : 3, shown = chips.length > MAX ? MAX - 1 : MAX;
+      ch = chips.slice(0, shown).join('');
+      if (chips.length > shown) ch += '<i class="more">+' + (chips.length - shown) + '</i>';
+    }
     cells.push('<button class="' + cls.join(' ') + '" data-day="' + key + '"><span class="' + ncls.join(' ') + '">' + d + '</span>' + lab + ch + '</button>');
   }
   while (cells.length % 7) cells.push('<div></div>');
@@ -764,6 +821,7 @@ function renderMonth() {
   for (let r = 0; r < cells.length / 7; r++) rows.push('<div class="mrow' + (collapsed && r !== selRow ? ' gone' : '') + '">' + cells.slice(r * 7, r * 7 + 7).join('') + '</div>');
   $('m-grid').innerHTML = rows.join('');
   $('m-grid').classList.toggle('collapsed', !!collapsed);
+  $('mv').classList.toggle('listmode', ms === 'list');
   $('m-expand').classList.toggle('hide', !collapsed);
   renderDay();
 }
@@ -1417,6 +1475,7 @@ async function testPush() {
 /* ---------- eventos de tela ---------- */
 document.addEventListener('click', async e => {
   if (Date.now() - suppressClick < 500) return;
+  if (!$('m-menu').classList.contains('hide') && !e.target.closest('#m-menu,#m-style')) { $('m-menu').classList.add('hide'); return; }
   const t = e.target.closest('button,[data-day],[data-slot]'); if (!t) return;
   const d = t.dataset;
   if (d.v) { S.view = d.v; if (d.v === 'cal' && S.calView !== 'month') S.tlScroll = true; render(); if (!(d.v === 'cal' && S.calView !== 'month')) window.scrollTo(0, 0); }
@@ -1426,6 +1485,7 @@ document.addEventListener('click', async e => {
     if (d.cv === 'month') { syncMonth(); S.collapsed = false; renderCal(); window.scrollTo(0, 0); } else { S.tlScroll = true; renderCal(); }
   }
   else if (d.day) {
+    if (t.classList.contains('cell') && S.calView === 'month' && S.mstyle === 'list') { S.sel = d.day; renderCal(); return; }
     if (t.classList.contains('cell') && S.calView === 'month') {
       if (S.collapsed && S.sel === d.day) { S.calView = 'day'; S.tlScroll = true; try { localStorage.setItem('cal-view', 'day'); } catch (err) {} renderCal(); return; }
       S.sel = d.day; S.collapsed = true; renderCal();
@@ -1441,6 +1501,15 @@ document.addEventListener('click', async e => {
     if (e.target !== t) return;
     const h = Math.max(0, Math.min(23, Math.floor(e.offsetY / HOUR)));
     openEditor('event', null, { day: d.slot, start_time: pad(h) + ':00', rule: 'm10' });
+  }
+  else if (d.ms) {
+    S.mstyle = d.ms; try { localStorage.setItem('cal-mstyle', d.ms); } catch (err) {}
+    if (d.ms === 'list') S.collapsed = false;
+    $('m-menu').classList.add('hide'); renderCal();
+  }
+  else if (t.id === 'm-style') {
+    const m = $('m-menu'), r = t.getBoundingClientRect();
+    m.style.top = (r.bottom + 6) + 'px'; m.classList.toggle('hide');
   }
   else if (d.mark) await toggleMarker(d.mark);
   else if (d.ev) openEditor('event', S.events.find(x => x.id === d.ev), null, d.occ);

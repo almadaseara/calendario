@@ -1,4 +1,4 @@
-const CACHE = 'calendario-v17';
+const CACHE = 'calendario-v18';
 const SHELL = ['./', './manifest.webmanifest', './icon-192.png'];
 
 self.addEventListener('install', e => {
@@ -22,7 +22,7 @@ self.addEventListener('fetch', e => {
     fetch(e.request, sameOrigin ? { cache: 'no-store' } : undefined).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
       return res;
-    }).catch(() => caches.match(e.request, { ignoreSearch: sameOrigin }).then(r => r || caches.match('./')))
+    }).catch(() => caches.match(e.request, { ignoreSearch: sameOrigin }).then(r => r || (e.request.mode === 'navigate' ? caches.match('./') : Response.error())))
   );
 });
 
