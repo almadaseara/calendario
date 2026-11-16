@@ -171,6 +171,10 @@ h2.late{color:var(--danger)}
 .blk.drag::after{content:attr(data-time);position:absolute;right:4px;top:2px;font-weight:700;background:var(--accent);color:#fff;border-radius:5px;padding:0 4px}
 .frow .link{flex:none;min-height:34px;font-size:15px}
 button.group.link{color:var(--accent)}
+.cell small.hol{color:var(--accent);font-weight:500}
+.adchip.hol{color:var(--accent);padding-left:2px;padding-right:2px}
+.wx{font-size:13px;color:var(--muted);margin:-2px 2px 10px}
+#tl .wx{margin:0 2px 6px}
 </style>
 </head>
 <body>
@@ -212,6 +216,7 @@ button.group.link{color:var(--accent)}
       <div class="wdrow"><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span><span>D</span></div>
       <div class="grid" id="m-grid"></div>
       <h2 id="d-title"></h2>
+      <div class="wx" id="d-wx"></div>
       <div class="chips" id="d-chips"></div>
       <div id="d-list"></div>
     </div>
@@ -238,6 +243,34 @@ button.group.link{color:var(--accent)}
       <button class="btn primary" id="n-on">Ativar notificações</button>
       <button class="btn" id="n-test">Enviar teste</button>
     </div>
+    <h2>Resumo do dia</h2>
+    <div class="group">
+      <div class="frow"><label for="s-am">De manhã, às 7h</label><input id="s-am" type="checkbox" class="toggle"></div>
+      <div class="frow"><label for="s-pm">À noite, às 20h</label><input id="s-pm" type="checkbox" class="toggle"></div>
+    </div>
+    <p class="note">Uma notificação com os eventos e tarefas do dia (de manhã) e do dia seguinte (à noite).</p>
+    <h2>Siri</h2>
+    <div class="group pad">
+      <p>Agende por voz sem abrir o app. No app Atalhos, crie um atalho chamado "Agendar" com três ações:</p>
+      <p>1. Ditar texto.<br>2. Obter conteúdo de URL: cole o endereço, escolha método POST, corpo JSON, e adicione dois campos de texto: "token" (cole a chave) e "text" (o Texto Ditado).<br>3. Falar texto, com o resultado da ação anterior.</p>
+      <p>Depois é só dizer "E aí Siri, agendar".</p>
+      <button class="btn" id="i-url">Copiar endereço</button>
+      <button class="btn" id="i-tok">Copiar chave</button>
+    </div>
+    <h2>Outros calendários</h2>
+    <div class="group pad">
+      <p>Veja seus eventos no Calendário do iPhone ou no Google Agenda. É só leitura e atualiza de tempos em tempos.</p>
+      <button class="btn" id="i-sub">Assinar no Calendário do iPhone</button>
+      <button class="btn" id="i-feed">Copiar link de assinatura</button>
+      <button class="btn" id="i-imp">Importar arquivo .ics</button>
+      <input id="i-file" type="file" accept=".ics,text/calendar" class="hide">
+    </div>
+    <p class="note">A chave e o link dão acesso ao seu calendário. Não compartilhe com quem não deve ver.</p>
+    <h2>Previsão do tempo</h2>
+    <div class="group pad">
+      <p id="w-status"></p>
+      <button class="btn" id="w-on">Usar minha localização</button>
+    </div>
     <h2>Categorias</h2>
     <div class="group">
       <div id="c-list"></div>
@@ -250,7 +283,7 @@ button.group.link{color:var(--accent)}
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 12</p>
+      <p>Versão 13</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
@@ -443,6 +476,117 @@ function nextRemindAt(day, time, minsArr, rep, until, ex) {
 }
 const overdue = () => { const t = ymd(new Date()); return S.tasks.filter(x => !x.done && x.due_day && x.due_day < t); };
 
+/* ---------- feriados, tempo, integrações ---------- */
+function easter(y) {
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3),
+    h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  return new Date(y, Math.floor((h + l - 7 * m + 114) / 31) - 1, ((h + l - 7 * m + 114) % 31) + 1);
+}
+const HOL = {};
+function holidays(y) {
+  if (HOL[y]) return HOL[y];
+  const m = {}, f = (mo, d, n) => { m[y + '-' + pad(mo) + '-' + pad(d)] = n; }, rel = (n, name) => { const d = easter(y); d.setDate(d.getDate() + n); m[ymd(d)] = name; };
+  f(1, 1, 'Confraternização Universal'); f(4, 21, 'Tiradentes'); f(5, 1, 'Dia do Trabalho'); f(6, 24, 'São João'); f(7, 2, 'Independência da Bahia');
+  f(9, 7, 'Independência do Brasil'); f(10, 12, 'Nossa Senhora Aparecida'); f(11, 2, 'Finados'); f(11, 15, 'Proclamação da República');
+  f(11, 20, 'Consciência Negra'); f(12, 8, 'Nossa Senhora da Conceição'); f(12, 25, 'Natal');
+  rel(-48, 'Carnaval'); rel(-47, 'Carnaval'); rel(-2, 'Sexta-feira Santa'); rel(60, 'Corpus Christi');
+  return (HOL[y] = m);
+}
+const holiday = day => holidays(+day.slice(0, 4))[day] || '';
+const dayTitle = day => dayLabel(day) + (holiday(day) ? ' · ' + holiday(day) : '');
+
+let WX = null;
+try { const c = JSON.parse(localStorage.getItem('cal-wx') || 'null'); if (c && Date.now() - c.t < 3 * 3600e3) WX = c.d; } catch (e) {}
+const getGeo = () => { try { return JSON.parse(localStorage.getItem('cal-geo') || 'null'); } catch (e) { return null; } };
+async function wxFetch(force) {
+  const geo = getGeo(); if (!geo || (WX && !force)) return;
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + geo.lat + '&longitude=' + geo.lon + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=16');
+    const j = await r.json(), d = {};
+    j.daily.time.forEach((t, i) => { d[t] = [j.daily.weather_code[i], Math.round(j.daily.temperature_2m_min[i]), Math.round(j.daily.temperature_2m_max[i]), j.daily.precipitation_probability_max[i]]; });
+    WX = d;
+    try { localStorage.setItem('cal-wx', JSON.stringify({ t: Date.now(), d })); } catch (e) {}
+    if (S.user) render();
+  } catch (e) {}
+}
+function wxText(day) {
+  const w = WX && WX[day]; if (!w) return '';
+  const c = w[0];
+  const name = c === 0 ? 'Céu limpo' : c <= 2 ? 'Parcialmente nublado' : c === 3 ? 'Nublado' : c <= 48 ? 'Neblina' : c <= 57 ? 'Garoa' : c <= 67 ? 'Chuva' : c <= 77 ? 'Neve' : c <= 82 ? 'Pancadas de chuva' : c <= 86 ? 'Neve' : 'Trovoadas';
+  return name + ' · ' + w[1] + '° a ' + w[2] + '°' + (w[3] !== null && w[3] !== undefined ? ' · chuva ' + w[3] + '%' : '');
+}
+function enableWeather() {
+  if (!navigator.geolocation) { toast('Este aparelho não informa a localização.'); return; }
+  navigator.geolocation.getCurrentPosition(p => {
+    try { localStorage.setItem('cal-geo', JSON.stringify({ lat: p.coords.latitude.toFixed(2), lon: p.coords.longitude.toFixed(2) })); } catch (e) {}
+    toast('Previsão do tempo ativada'); wxFetch(true);
+  }, () => toast('Libere a localização para este app nos Ajustes do iPhone.'), { timeout: 15000, maximumAge: 3600000 });
+}
+
+async function loadSettings() {
+  try {
+    let { data } = await sb.from('user_settings').select('*').maybeSingle();
+    if (!data || !data.api_token) {
+      const tok = (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '');
+      const res = await sb.from('user_settings').upsert({ user_id: S.user.id, api_token: tok }, { onConflict: 'user_id' }).select().maybeSingle();
+      data = res.data;
+    }
+    S.settings = data || {};
+  } catch (e) { S.settings = S.settings || {}; }
+  if (S.view === 'set') renderSet();
+}
+const API_URL = SB_URL + '/functions/v1/api';
+async function copyText(text, msg) {
+  try { await navigator.clipboard.writeText(text); toast(msg); }
+  catch (e) { window.prompt('Copie o texto abaixo:', text); }
+}
+function needToken() { if (S.settings && S.settings.api_token) return true; toast('Ainda carregando. Tente de novo em instantes.'); loadSettings(); return false; }
+
+function parseIcs(txt) {
+  const lines = txt.replace(/\r?\n[ \t]/g, '').split(/\r?\n/), out = [];
+  const un = s => s.replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1');
+  const dt = val => {
+    const m = val.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/); if (!m) return null;
+    if (!m[4]) return { day: m[1] + '-' + m[2] + '-' + m[3], time: null };
+    if (m[7]) { const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5])); return { day: ymd(d), time: pad(d.getHours()) + ':' + pad(d.getMinutes()) }; }
+    return { day: m[1] + '-' + m[2] + '-' + m[3], time: m[4] + ':' + m[5] };
+  };
+  let cur = null;
+  for (const ln of lines) {
+    if (ln === 'BEGIN:VEVENT') { cur = {}; continue; }
+    if (ln === 'END:VEVENT') { if (cur && cur.start && cur.title) out.push(cur); cur = null; continue; }
+    if (!cur) continue;
+    const i = ln.indexOf(':'); if (i < 0) continue;
+    const name = ln.slice(0, i).split(';')[0].toUpperCase(), val = ln.slice(i + 1);
+    if (name === 'SUMMARY') cur.title = un(val).trim();
+    else if (name === 'LOCATION') cur.location = un(val).trim();
+    else if (name === 'DESCRIPTION') cur.notes = un(val).trim();
+    else if (name === 'DTSTART') cur.start = dt(val);
+    else if (name === 'DTEND') cur.end = dt(val);
+    else if (name === 'RRULE') {
+      const f = (val.match(/FREQ=(\w+)/) || [])[1], iv = +((val.match(/INTERVAL=(\d+)/) || [])[1] || 1), by = (val.match(/BYDAY=([\w,]+)/) || [])[1] || '', u = val.match(/UNTIL=(\d{4})(\d{2})(\d{2})/);
+      if (iv === 1) {
+        if (f === 'DAILY') cur.repeat = 'daily';
+        else if (f === 'WEEKLY') cur.repeat = by.split(',').sort().join(',') === 'FR,MO,TH,TU,WE' ? 'weekdays' : (by.includes(',') ? null : 'weekly');
+        else if (f === 'MONTHLY' && !by) cur.repeat = 'monthly';
+        else if (f === 'YEARLY') cur.repeat = 'yearly';
+      }
+      if (u) cur.until = u[1] + '-' + u[2] + '-' + u[3];
+    }
+  }
+  return out;
+}
+async function importIcs(file) {
+  const evs = parseIcs(await file.text()).slice(0, 500);
+  if (!evs.length) { toast('Não encontrei eventos nesse arquivo.'); return; }
+  const rows = evs.map(e => ({ title: e.title.slice(0, 200), day: e.start.day, start_time: e.start.time,
+    end_time: e.start.time && e.end && e.end.time && e.end.day === e.start.day && e.end.time > e.start.time ? e.end.time : null,
+    location: e.location || null, notes: e.notes ? e.notes.slice(0, 2000) : null, repeat: e.repeat || 'none', repeat_until: e.repeat ? (e.until || null) : null }));
+  await run(sb.from('events').insert(rows));
+  await loadAll();
+  toast(rows.length + (rows.length === 1 ? ' evento importado' : ' eventos importados'));
+}
+
 /* ---------- dados ---------- */
 async function loadAll() {
   const from = new Date(); from.setMonth(from.getMonth() - 6);
@@ -504,7 +648,7 @@ function renderMonth() {
     if (key === today) ncls.push('today');
     if (key === S.sel) ncls.push('sel');
     h += '<button class="' + cls.join(' ') + '" data-day="' + key + '"><span class="' + ncls.join(' ') + '">' + d + '</span>' +
-      (allDay ? '<small>' + esc(allDay.title) + '</small>' : '') +
+      (allDay ? '<small>' + esc(allDay.title) + '</small>' : (holiday(key) ? '<small class="hol">' + esc(holiday(key)) + '</small>' : '')) +
       (others ? '<span class="dots">' + '<i></i>'.repeat(Math.min(others, 3)) + '</span>' : '') + '</button>';
   }
   $('m-grid').innerHTML = h;
@@ -546,7 +690,7 @@ function renderTimeline() {
     const d = fromYmd(day);
     head += '<button class="tlh' + (day === today ? ' today' : '') + (day === S.sel ? ' sel' : '') + '" data-day="' + day + '"><span>' + WD[d.getDay()].slice(0, 3) + '</span><b>' + d.getDate() + '</b></button>';
     const evs = inst.filter(e => e.day === day), tks = S.tasks.filter(t => t.due_day === day);
-    all += '<div class="tlcol">' +
+    all += '<div class="tlcol">' + (holiday(day) ? '<span class="adchip hol">' + esc(holiday(day)) + '</span>' : '') +
       evs.filter(e => !e.start_time).map(e => { const cat = catOf(e.category_id); return '<button class="adchip c-' + (cat ? cat.color : 'gray') + '" data-ev="' + e.id + '" data-occ="' + e.day + '">' + esc(e.title) + '</button>'; }).join('') +
       tks.filter(t => !t.due_time).map(t => '<button class="adchip task' + (t.done ? ' done' : '') + '" data-tk="' + t.id + '">' + (t.done ? '✓ ' : '○ ') + esc(t.title) + '</button>').join('') +
       (day === today ? late.map(t => '<button class="adchip task late" data-tk="' + t.id + '">○ ' + esc(t.title) + '</button>').join('') : '') + '</div>';
@@ -559,7 +703,7 @@ function renderTimeline() {
       return '<button class="blk task' + (it.tk.done ? ' done' : '') + '" style="' + st + '" data-tk="' + it.tk.id + '"><b>' + (it.tk.done ? '✓ ' : '○ ') + esc(it.tk.title) + '</b></button>';
     }).join('') + (day === today ? '<div class="nowline" style="top:' + ((new Date().getHours() * 60 + new Date().getMinutes()) / 60 * HOUR) + 'px"></div>' : '') + '</div>';
   });
-  $('tl').innerHTML = head + '</div>' + all + '</div>' + body + '</div>';
+  $('tl').innerHTML = (wxText(S.sel) ? '<div class="wx">' + (n > 1 ? dayLabel(S.sel).replace(/^.*· /, '') + ': ' : '') + wxText(S.sel) + '</div>' : '') + head + '</div>' + all + '</div>' + body + '</div>';
   if (S.tlScroll) {
     S.tlScroll = false;
     const hr = days.includes(today) ? Math.max(0, new Date().getHours() - 1) : 7;
@@ -583,7 +727,8 @@ function itemHtml(kind, o) {
 }
 
 function renderDay() {
-  $('d-title').textContent = dayLabel(S.sel);
+  $('d-title').textContent = dayTitle(S.sel);
+  $('d-wx').textContent = wxText(S.sel);
   const evs = expand(S.sel, S.sel);
   const marker = evs.find(isMarker);
   $('d-chips').innerHTML = S.cats.map(c => '<button class="chip c-' + c.color + (marker && marker.category_id === c.id ? ' on' : '') + '" data-mark="' + c.id + '">' + (marker && marker.category_id === c.id ? '✓ ' : '') + esc(c.name) + '</button>').join('');
@@ -602,7 +747,7 @@ function renderAgenda() {
   S.tasks.filter(t => q ? plain(t.title + ' ' + (t.notes || '')).includes(q) : (!t.done && t.due_day && t.due_day >= today)).forEach(t => rows.push([t.due_day || '9999-12-31', t.due_time || '', 'task', t]));
   rows.sort((a, b) => (a[0] + a[1]).localeCompare(b[0] + b[1]));
   let h = '', last = null, group = [];
-  const flush = () => { if (group.length) h += '<h2>' + (last === '9999-12-31' ? 'Sem data' : dayLabel(last)) + '</h2>' + listWrap(group); group = []; };
+  const flush = () => { if (group.length) h += '<h2>' + (last === '9999-12-31' ? 'Sem data' : dayTitle(last)) + '</h2>' + listWrap(group); group = []; };
   if (!q) { const late = overdue(); if (late.length) h += '<h2 class="late">Tarefas atrasadas</h2>' + listWrap(late.map(t => itemHtml('task', t))); }
   rows.slice(0, 400).forEach(([day, , kind, o]) => {
     if (day !== last) { flush(); last = day; }
@@ -630,6 +775,10 @@ function renderSet() {
     Object.entries(COLORS).map(([k, v]) => '<option value="' + k + '"' + (k === c.color ? ' selected' : '') + '>' + v + '</option>').join('') +
     '</select><button data-cdel="' + c.id + '" aria-label="Excluir categoria">✕</button></div>').join('');
   pushStatus();
+  const st = S.settings || {};
+  $('s-am').checked = st.digest_am !== false; $('s-pm').checked = st.digest_pm !== false;
+  $('w-status').textContent = getGeo() ? 'Ativada. A previsão aparece no dia selecionado, para os próximos 16 dias (dados do Open-Meteo).' : 'Mostra a previsão no dia selecionado. Usa sua localização aproximada e o serviço Open-Meteo.';
+  $('w-on').textContent = getGeo() ? 'Atualizar localização' : 'Usar minha localização';
 }
 
 /* ---------- editor ---------- */
@@ -1255,6 +1404,19 @@ document.addEventListener('mouseup', () => { mouseDrag = null; if (drag) dragEnd
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeEditor(); });
 $('c-new').onclick = async () => { await run(sb.from('categories').insert({ name: 'Nova categoria', color: 'blue', sort: S.cats.length })); await loadAll(); };
 $('n-on').onclick = enablePush;
+['s-am', 's-pm'].forEach(id => $(id).addEventListener('change', async () => {
+  const row = { user_id: S.user.id, digest_am: $('s-am').checked, digest_pm: $('s-pm').checked };
+  await run(sb.from('user_settings').upsert(row, { onConflict: 'user_id' }));
+  S.settings = Object.assign(S.settings || {}, row);
+  toast('Resumo do dia atualizado');
+}));
+$('i-url').onclick = () => copyText(API_URL, 'Endereço copiado');
+$('i-tok').onclick = () => { if (needToken()) copyText(S.settings.api_token, 'Chave copiada'); };
+$('i-feed').onclick = () => { if (needToken()) copyText(API_URL + '?token=' + S.settings.api_token, 'Link copiado'); };
+$('i-sub').onclick = () => { if (needToken()) location.href = API_URL.replace(/^https:/, 'webcal:') + '?token=' + S.settings.api_token; };
+$('i-imp').onclick = () => $('i-file').click();
+$('i-file').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) { try { await importIcs(f); } catch (err) { toast('Não deu para importar esse arquivo.'); } } });
+$('w-on').onclick = enableWeather;
 $('u-upd').onclick = async () => {
   try {
     if ('serviceWorker' in navigator) { const r = await navigator.serviceWorker.getRegistration(); if (r) await r.update(); }
@@ -1291,7 +1453,7 @@ function start() {
     const was = S.user && S.user.id;
     S.user = session ? session.user : null;
     show(!!S.user);
-    if (S.user && was !== S.user.id) { loadCache(); render(); setTimeout(() => { loadAll().catch(() => {}); checkStt(); }, 0); }
+    if (S.user && was !== S.user.id) { loadCache(); render(); setTimeout(() => { loadAll().catch(() => {}); checkStt(); loadSettings(); wxFetch(); }, 0); }
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user) loadAll().catch(() => {}); });
 }
