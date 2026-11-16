@@ -166,6 +166,11 @@ button.group{min-height:46px;text-align:center}
 .nowline{position:absolute;left:0;right:0;border-top:1.5px solid var(--accent);z-index:2;pointer-events:none}
 .nowline::before{content:"";position:absolute;left:-4px;top:-5px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
 h2.late{color:var(--danger)}
+.blk{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.blk.drag{z-index:5;opacity:.92;box-shadow:0 6px 18px rgba(0,0,0,.35);outline:2px solid var(--accent)}
+.blk.drag::after{content:attr(data-time);position:absolute;right:4px;top:2px;font-weight:700;background:var(--accent);color:#fff;border-radius:5px;padding:0 4px}
+.frow .link{flex:none;min-height:34px;font-size:15px}
+button.group.link{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -245,7 +250,7 @@ h2.late{color:var(--danger)}
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 11</p>
+      <p>Versão 12</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
@@ -270,6 +275,10 @@ h2.late{color:var(--danger)}
       <button data-k="event" class="on">Evento</button>
       <button data-k="task">Tarefa</button>
     </div>
+    <div class="seg hide" id="f-scope">
+      <button data-sc="one" class="on">Só este evento</button>
+      <button data-sc="all">Toda a série</button>
+    </div>
     <div class="group">
       <div class="frow"><input id="f-title" placeholder="Título" aria-label="Título"></div>
       <div class="frow" id="f-locbox"><input id="f-loc" placeholder="Local" aria-label="Local"></div>
@@ -284,14 +293,21 @@ h2.late{color:var(--danger)}
       </div>
     </div>
     <div class="group">
-      <div class="frow"><label for="f-repeat">Repetir</label><select id="f-repeat"></select></div>
+      <div class="frow" id="f-repeatbox"><label for="f-repeat">Repetir</label><select id="f-repeat"></select></div>
       <div class="frow" id="f-untilbox"><label for="f-until">Termina em</label><input id="f-until" type="date"></div>
       <div class="frow"><label for="f-remind">Alerta</label><select id="f-remind"></select></div>
+      <div class="frow" id="f-remind2box"><label for="f-remind2">Segundo alerta</label><select id="f-remind2"></select></div>
+    </div>
+    <div class="group" id="f-extra">
+      <div class="frow"><input id="f-guests" placeholder="Convidados (e-mails separados por vírgula)" aria-label="Convidados" autocapitalize="off" autocorrect="off"></div>
+      <div class="frow"><input id="f-meet" placeholder="Link da videochamada" aria-label="Link da videochamada" inputmode="url" autocapitalize="off" autocorrect="off"><button class="link" id="f-meetnew">Criar Meet</button></div>
     </div>
     <div class="group">
       <div class="frow"><textarea id="f-notes" placeholder="Notas" aria-label="Notas"></textarea></div>
     </div>
-    <button class="group danger hide" id="f-del1">Apagar só este dia</button>
+    <button class="group link hide" id="f-join">Entrar na videochamada</button>
+    <button class="group link hide" id="f-mail">Enviar convite por e-mail</button>
+    <button class="group link hide" id="f-share">Compartilhar evento</button>
     <button class="group danger hide" id="f-del">Apagar</button>
   </div>
 </div>
@@ -407,16 +423,23 @@ function expand(from, to) {
   out.sort((a, b) => (a.day + (a.start_time || '')).localeCompare(b.day + (b.start_time || '')));
   return out;
 }
-function nextRemindAt(day, time, min, rep, until, ex) {
-  if (min === null || min === undefined || !day) return null;
-  if (!rep || rep === 'none') return remindAtFor(day, time, min);
-  const now = Date.now();
-  let d = day, n = 0;
+function nextRemindAt(day, time, minsArr, rep, until, ex) {
+  if (!day || !minsArr || !minsArr.length) return null;
+  const now = Date.now(), at = (d, m) => new Date(remindAtFor(d, time, m)).getTime();
+  if (!rep || rep === 'none') {
+    const ts = minsArr.map(m => at(day, m)).sort((a, b) => a - b), f = ts.find(t => t > now);
+    return new Date(f !== undefined ? f : ts[ts.length - 1]).toISOString();
+  }
+  const maxM = Math.max(...minsArr);
+  let best = null, d = day, n = 0;
   while (d && (!until || d <= until) && n++ < 1500) {
-    if (!(ex || []).includes(d)) { const r = remindAtFor(d, time, min); if (new Date(r).getTime() > now) return r; }
+    if (!(ex || []).includes(d)) {
+      minsArr.forEach(m => { const t = at(d, m); if (t > now && (best === null || t < best)) best = t; });
+      if (best !== null && at(d, maxM) > best) break;
+    }
     d = nextOcc(d, rep);
   }
-  return null;
+  return best === null ? null : new Date(best).toISOString();
 }
 const overdue = () => { const t = ymd(new Date()); return S.tasks.filter(x => !x.done && x.due_day && x.due_day < t); };
 
@@ -610,19 +633,34 @@ function renderSet() {
 }
 
 /* ---------- editor ---------- */
-function fillRemind(selected) {
-  const hasDay = !!$('f-day').value, hasTime = S.kind === 'event' ? !$('f-all').checked && !!$('f-start').value : !!$('f-start').value;
+const alertMins = o => (o.remind_mins && o.remind_mins.length) ? o.remind_mins : (o.remind_min !== null && o.remind_min !== undefined ? [o.remind_min] : []);
+function fillRemind(sel1, sel2) {
+  const isEvent = S.kind === 'event';
+  const hasDay = !!$('f-day').value, hasTime = isEvent ? !$('f-all').checked && !!$('f-start').value : !!$('f-start').value;
   const opts = remindOptions(hasDay, hasTime);
-  if (selected === 'keep') opts.push(['keep', 'Manter o alerta atual']);
-  $('f-remind').innerHTML = opts.map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('');
-  $('f-remind').value = opts.some(o => o[0] === selected) ? selected : '';
+  const html = o => o.map(([v, l]) => '<option value="' + v + '">' + l + '</option>').join('');
+  const o1 = sel1 === 'keep' ? opts.concat([['keep', 'Manter o alerta atual']]) : opts;
+  $('f-remind').innerHTML = html(o1);
+  $('f-remind').value = o1.some(o => o[0] === sel1) ? sel1 : '';
   $('f-remind').disabled = !hasDay;
+  $('f-remind2').innerHTML = html(opts);
+  $('f-remind2').value = opts.some(o => o[0] === sel2) && sel2 !== $('f-remind').value ? sel2 : '';
+  const first = $('f-remind').value;
+  $('f-remind2box').classList.toggle('hide', !isEvent || !first || first === 'keep');
 }
 function updRepeat() {
-  const hasDay = !!$('f-day').value;
+  const hasDay = !!$('f-day').value, one = S.edit && S.edit.scoped && S.scope === 'one';
   $('f-repeat').disabled = !hasDay;
   if (!hasDay) $('f-repeat').value = 'none';
-  $('f-untilbox').classList.toggle('hide', $('f-repeat').value === 'none');
+  $('f-repeatbox').classList.toggle('hide', !!one);
+  $('f-untilbox').classList.toggle('hide', !!one || $('f-repeat').value === 'none');
+}
+function updExtras() {
+  const isEvent = S.kind === 'event';
+  $('f-extra').classList.toggle('hide', !isEvent);
+  $('f-join').classList.toggle('hide', !isEvent || !$('f-meet').value.trim());
+  $('f-mail').classList.toggle('hide', !isEvent || !$('f-guests').value.trim());
+  $('f-share').classList.toggle('hide', !isEvent);
 }
 function setKind(k) {
   S.kind = k;
@@ -634,20 +672,33 @@ function setKind(k) {
   $('f-daylabel').textContent = k === 'event' ? 'Data' : 'Prazo';
   $('f-startlabel').textContent = k === 'event' ? 'Início' : 'Hora';
   $('f-times').classList.toggle('hide', k === 'event' && $('f-all').checked);
+  updExtras();
+}
+function applyScope() {
+  if (!S.edit || !S.edit.scoped) { $('f-scope').classList.add('hide'); return; }
+  $('f-scope').classList.remove('hide');
+  document.querySelectorAll('#f-scope button').forEach(b => b.classList.toggle('on', b.dataset.sc === S.scope));
+  const one = S.scope === 'one';
+  $('f-day').value = one ? S.edit.occ : S.edit.baseDay;
+  $('f-daylabel').textContent = one ? 'Data' : 'Começa em';
+  $('f-del').textContent = one ? 'Apagar este evento' : 'Apagar todos os eventos da série';
+  updRepeat();
 }
 function openEditor(kind, o, draft, occ) {
   const series = !!(o && (o.repeat || 'none') !== 'none');
-  S.edit = o ? { kind, id: o.id, remind_at: o.remind_at, remind_min: o.remind_min, exdates: o.exdates || [], occ: occ || null, series } : null;
+  S.edit = o ? { kind, id: o.id, remind_at: o.remind_at, mins: alertMins(o), exdates: o.exdates || [], occ: occ || null, baseDay: o.day, series, scoped: series && kind === 'event' && !!occ } : null;
+  S.scope = 'one';
   const v = o || draft || {};
   $('f-head').textContent = o ? (kind === 'event' ? 'Editar evento' : 'Editar tarefa') : 'Novo';
   $('f-seg').classList.toggle('hide', !!o);
   $('f-del').classList.toggle('hide', !o);
   $('f-del').textContent = series && kind === 'event' ? 'Apagar todos os eventos da série' : 'Apagar';
-  $('f-del1').classList.toggle('hide', !(series && kind === 'event' && occ));
   $('f-title').value = v.title || '';
   $('f-cat').innerHTML = '<option value="">Sem categoria</option>' + S.cats.map(c => '<option value="' + c.id + '">' + esc(c.name) + '</option>').join('');
   $('f-cat').value = v.category_id || '';
   $('f-loc').value = v.location || '';
+  $('f-guests').value = v.guests || '';
+  $('f-meet').value = v.meet_url || '';
   const day = kind === 'event' ? (v.day || S.sel) : (v.due_day || '');
   const time = kind === 'event' ? v.start_time : v.due_time;
   $('f-day').value = day;
@@ -661,38 +712,66 @@ function openEditor(kind, o, draft, occ) {
   setKind(kind);
   if (series && kind === 'event') $('f-daylabel').textContent = 'Começa em';
   updRepeat();
-  fillRemind(o ? deriveRule(o, day, hm(time)) : (v.rule || ''));
+  applyScope();
+  let r1 = v.rule || '', r2 = '';
+  if (o) {
+    const opts = remindOptions(true, !!time).map(x => x[0]).filter(Boolean), m = alertMins(o);
+    r1 = m.length ? (opts.find(r => RULE_MIN[r] === m[0]) || 'keep') : deriveRule(o, day, hm(time));
+    r2 = m.length > 1 ? (opts.find(r => RULE_MIN[r] === m[1]) || '') : '';
+  }
+  fillRemind(r1, r2);
   $('sheet').classList.add('open');
+  $('sheet').firstElementChild.scrollTop = 0;
   if (!o && !draft) setTimeout(() => $('f-title').focus(), 50);
 }
 function closeEditor() { $('sheet').classList.remove('open'); S.edit = null; }
+
+async function excludeOcc(e, occ) {
+  const ex = (e.exdates || []).concat(occ);
+  await run(sb.from('events').update({ exdates: ex, remind_at: nextRemindAt(e.day, hm(e.start_time) || null, alertMins(e), e.repeat, e.repeat_until, ex), notified_at: null }).eq('id', e.id));
+}
+async function detach(e, occ, changes) {
+  const copy = { title: e.title, category_id: e.category_id, location: e.location, notes: e.notes, guests: e.guests, meet_url: e.meet_url,
+    day: occ, start_time: e.start_time, end_time: e.end_time, remind_min: e.remind_min, remind_mins: e.remind_mins, repeat: 'none' };
+  Object.assign(copy, changes);
+  copy.remind_at = nextRemindAt(copy.day, hm(copy.start_time) || null, alertMins(copy), 'none');
+  await excludeOcc(e, occ);
+  await run(sb.from('events').insert(copy));
+}
 
 async function saveEditor() {
   const title = $('f-title').value.trim();
   if (!title) { toast('Dê um título primeiro'); $('f-title').focus(); return; }
   let day = $('f-day').value || null;
   const isEvent = S.kind === 'event';
-  if (day && $('f-repeat').value === 'weekdays') { while ([0, 6].includes(fromYmd(day).getDay())) day = addDays(day, 1); }
+  const one = !!(isEvent && S.edit && S.edit.scoped && S.scope === 'one');
+  if (day && !one && $('f-repeat').value === 'weekdays') { while ([0, 6].includes(fromYmd(day).getDay())) day = addDays(day, 1); }
   if (isEvent && !day) { toast('Escolha uma data'); return; }
   const time = (isEvent && $('f-all').checked) ? null : ($('f-start').value || null);
-  const rep = day ? ($('f-repeat').value || 'none') : 'none';
+  const end = time && isEvent ? ($('f-end').value || null) : null;
+  if (end && end <= time) { toast('O fim precisa ser depois do início.'); return; }
+  const rep = one ? 'none' : (day ? ($('f-repeat').value || 'none') : 'none');
   const until = rep !== 'none' ? ($('f-until').value || null) : null;
   if (until && until < day) { toast('A repetição termina antes de começar. Ajuste a data final.'); return; }
-  const rule = $('f-remind').value;
-  const keep = rule === 'keep' && S.edit;
-  const min = keep ? (S.edit.remind_min === undefined ? null : S.edit.remind_min) : ruleMin(rule, !!time);
-  const remind = keep && min === null ? S.edit.remind_at : nextRemindAt(day, time, min, rep, until, S.edit ? S.edit.exdates : []);
-  const row = { title, notes: $('f-notes').value.trim() || null, remind_at: remind, remind_min: min, repeat: rep, repeat_until: until };
-  const same = S.edit && S.edit.remind_at && remind && Math.abs(new Date(S.edit.remind_at) - new Date(remind)) < 1000;
+  const r1 = $('f-remind').value, r2 = isEvent ? $('f-remind2').value : '';
+  const keep = r1 === 'keep' && S.edit;
+  let minsArr = keep ? S.edit.mins.slice() : [ruleMin(r1, !!time), ruleMin(r2, !!time)].filter(x => x !== null);
+  minsArr = [...new Set(minsArr)];
+  const ex = one ? [] : (S.edit ? S.edit.exdates : []);
+  const remind = keep && !minsArr.length ? S.edit.remind_at : nextRemindAt(day, time, minsArr, rep, until, ex);
+  const row = { title, notes: $('f-notes').value.trim() || null, remind_at: remind, remind_min: minsArr.length ? minsArr[0] : null, repeat: rep, repeat_until: until };
+  const same = S.edit && !one && S.edit.remind_at && remind && Math.abs(new Date(S.edit.remind_at) - new Date(remind)) < 1000;
   if (!same) row.notified_at = null;
-  if (isEvent) Object.assign(row, { day, start_time: time, end_time: time ? ($('f-end').value || null) : null, category_id: $('f-cat').value || null, location: $('f-loc').value.trim() || null });
+  if (isEvent) Object.assign(row, { remind_mins: minsArr.length ? minsArr : null, day, start_time: time, end_time: end, category_id: $('f-cat').value || null,
+    location: $('f-loc').value.trim() || null, guests: $('f-guests').value.trim() || null, meet_url: $('f-meet').value.trim() || null });
   else Object.assign(row, { due_day: day, due_time: day ? time : null });
   const table = isEvent ? 'events' : 'tasks';
   $('f-save').disabled = true;
   try {
-    if (S.edit) await run(sb.from(table).update(row).eq('id', S.edit.id));
+    if (one) { await excludeOcc(S.events.find(x => x.id === S.edit.id), S.edit.occ); await run(sb.from('events').insert(row)); }
+    else if (S.edit) await run(sb.from(table).update(row).eq('id', S.edit.id));
     else await run(sb.from(table).insert(row));
-    if (isEvent && day && !(S.edit && S.edit.occ)) { S.sel = day; syncMonth(); }
+    if (isEvent && day && (one || !(S.edit && S.edit.occ))) { S.sel = day; syncMonth(); }
     closeEditor();
     await loadAll();
     toast(remind && new Date(remind) > new Date() ? 'Salvo, com alerta' : 'Salvo');
@@ -704,7 +783,7 @@ async function toggleMarker(catId) {
   const markers = expand(S.sel, S.sel).filter(isMarker);
   const same = markers.find(e => e.category_id === catId);
   for (const m of markers) {
-    if ((m.repeat || 'none') !== 'none') await run(sb.from('events').update({ exdates: (m.exdates || []).concat(S.sel) }).eq('id', m.id));
+    if ((m.repeat || 'none') !== 'none') await excludeOcc(S.events.find(x => x.id === m.id), S.sel);
     else await run(sb.from('events').delete().eq('id', m.id));
   }
   if (!same) await run(sb.from('events').insert({ title: cat.name, category_id: catId, day: S.sel }));
@@ -726,6 +805,100 @@ async function toggleTask(tk) {
   await run(sb.from('tasks').update({ done: !tk.done }).eq('id', tk.id));
   await loadAll();
 }
+
+/* ---------- arrastar, convite e videochamada ---------- */
+const minToHm = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+async function moveItem(kind, id, occ, newDay, startMin) {
+  const st = minToHm(startMin);
+  if (kind === 'task') {
+    const t = S.tasks.find(x => x.id === id); if (!t) return;
+    await run(sb.from('tasks').update({ due_day: newDay, due_time: st, remind_at: remindAtFor(newDay, st, t.remind_min), notified_at: null }).eq('id', id));
+  } else {
+    const e = S.events.find(x => x.id === id); if (!e) return;
+    const dur = e.end_time ? mins(e.end_time) - mins(e.start_time) : null;
+    const en = dur ? minToHm(Math.min(1439, startMin + dur)) : null;
+    if ((e.repeat || 'none') !== 'none') await detach(e, occ, { day: newDay, start_time: st, end_time: en });
+    else await run(sb.from('events').update({ day: newDay, start_time: st, end_time: en, remind_at: nextRemindAt(newDay, st, alertMins(e), 'none'), notified_at: null }).eq('id', id));
+  }
+  await loadAll();
+  toast('Movido para ' + dayLabel(newDay).replace(/^.*· /, '') + ', ' + st);
+}
+let drag = null, dragTimer = null, dragPending = null, suppressClick = 0;
+function dragStart(el, x, y) {
+  const cols = [...$('tl').querySelectorAll('.tlbody .tlcol')];
+  drag = { el, y0: y, top0: parseFloat(el.style.top) || 0, top: parseFloat(el.style.top) || 0, cols, idx0: cols.indexOf(el.parentElement), idx: cols.indexOf(el.parentElement), moved: false };
+  el.classList.add('drag'); el.style.left = '0'; el.style.width = '100%';
+  el.setAttribute('data-time', minToHm(Math.round(drag.top / HOUR * 60)));
+}
+function dragMove(x, y) {
+  const step = HOUR / 4;
+  let top = Math.round((drag.top0 + (y - drag.y0)) / step) * step;
+  top = Math.max(0, Math.min(24 * HOUR - step, top));
+  drag.el.style.top = top + 'px'; drag.top = top;
+  const idx = drag.cols.findIndex(c => { const r = c.getBoundingClientRect(); return x >= r.left && x < r.right; });
+  if (idx >= 0 && idx !== drag.idx) { drag.cols[idx].appendChild(drag.el); drag.idx = idx; }
+  drag.el.setAttribute('data-time', minToHm(Math.round(top / HOUR * 60)));
+  drag.moved = true;
+}
+async function dragEnd(cancel) {
+  const d = drag; drag = null; if (!d) return;
+  suppressClick = Date.now();
+  d.el.classList.remove('drag');
+  if (cancel || !d.moved || (d.top === d.top0 && d.idx === d.idx0)) { renderCal(); return; }
+  const ds = d.el.dataset;
+  try { await moveItem(ds.ev ? 'event' : 'task', ds.ev || ds.tk, ds.occ, d.cols[d.idx].dataset.slot, Math.round(d.top / HOUR * 60)); }
+  catch (e) { renderCal(); }
+}
+function icsEscape(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function formEvent() {
+  const day = $('f-day').value, allDay = $('f-all').checked || !$('f-start').value;
+  return { title: $('f-title').value.trim() || 'Evento', day, allDay, start: $('f-start').value, end: $('f-end').value, location: $('f-loc').value.trim(),
+    notes: $('f-notes').value.trim(), meet: $('f-meet').value.trim() ? fixUrl($('f-meet').value.trim()) : '', guests: $('f-guests').value.split(/[,;\s]+/).map(x => x.trim()).filter(x => /.+@.+\..+/.test(x)),
+    repeat: (S.edit && S.edit.scoped && S.scope === 'one') ? 'none' : $('f-repeat').value, until: $('f-until').value };
+}
+function inviteText(v) {
+  const d = fromYmd(v.day);
+  const when = WD[d.getDay()] + ', ' + d.getDate() + ' de ' + MONTHS[d.getMonth()] + ' de ' + d.getFullYear() + (v.allDay ? ' (dia inteiro)' : ' às ' + v.start + (v.end ? ' – ' + v.end : ''));
+  return [v.title, 'Quando: ' + when, v.repeat !== 'none' ? 'Repete: ' + REPEATS[v.repeat].toLowerCase() : '', v.location ? 'Onde: ' + v.location : '', v.meet ? 'Videochamada: ' + v.meet : '', v.notes].filter(Boolean).join('\n');
+}
+function buildIcs(v) {
+  const z = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const dnum = s => s.replace(/-/g, '');
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Calendario//PT-BR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+    'UID:' + ((S.edit && S.edit.id) || Date.now()) + '-' + dnum(v.day) + '@calendario', 'DTSTAMP:' + z(new Date())];
+  if (v.allDay) { L.push('DTSTART;VALUE=DATE:' + dnum(v.day), 'DTEND;VALUE=DATE:' + dnum(addDays(v.day, 1))); }
+  else {
+    const s = fromYmd(v.day); const [h, m] = v.start.split(':').map(Number); s.setHours(h, m, 0, 0);
+    const e = new Date(s.getTime() + 3600000); if (v.end) { const [eh, em] = v.end.split(':').map(Number); e.setHours(eh, em, 0, 0); }
+    L.push('DTSTART:' + z(s), 'DTEND:' + z(e));
+  }
+  const RR = { daily: 'FREQ=DAILY', weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', weekly: 'FREQ=WEEKLY', monthly: 'FREQ=MONTHLY', yearly: 'FREQ=YEARLY' };
+  if (RR[v.repeat]) L.push('RRULE:' + RR[v.repeat] + (v.until ? ';UNTIL=' + dnum(v.until) + 'T235959Z' : ''));
+  L.push('SUMMARY:' + icsEscape(v.title));
+  if (v.location) L.push('LOCATION:' + icsEscape(v.location));
+  const desc = [v.notes, v.meet ? 'Videochamada: ' + v.meet : ''].filter(Boolean).join('\n');
+  if (desc) L.push('DESCRIPTION:' + icsEscape(desc));
+  if (v.meet) L.push('URL:' + v.meet);
+  v.guests.forEach(g => L.push('ATTENDEE;ROLE=REQ-PARTICIPANT;RSVP=TRUE:mailto:' + g));
+  L.push('END:VEVENT', 'END:VCALENDAR');
+  return L.join('\r\n');
+}
+function mailInvite() {
+  const v = formEvent(); if (!v.day) { toast('Escolha uma data'); return; }
+  if (!v.guests.length) { toast('Digite pelo menos um e-mail válido em Convidados.'); return; }
+  location.href = 'mailto:' + v.guests.join(',') + '?subject=' + encodeURIComponent('Convite: ' + v.title) + '&body=' + encodeURIComponent(inviteText(v));
+}
+async function shareInvite() {
+  const v = formEvent(); if (!v.day) { toast('Escolha uma data'); return; }
+  const text = inviteText(v);
+  try {
+    const file = new File([buildIcs(v)], 'convite.ics', { type: 'text/calendar' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: v.title, text }); return; }
+    if (navigator.share) { await navigator.share({ title: v.title, text }); return; }
+    await navigator.clipboard.writeText(text); toast('Convite copiado. Cole onde quiser enviar.');
+  } catch (e) { if (e && e.name !== 'AbortError') toast('Não deu para compartilhar neste aparelho.'); }
+}
+const fixUrl = u => /^https?:\/\//i.test(u) ? u : 'https://' + u;
 
 /* ---------- adicionar rápido e voz ---------- */
 function parseQuick(text) {
@@ -981,6 +1154,7 @@ async function testPush() {
 
 /* ---------- eventos de tela ---------- */
 document.addEventListener('click', async e => {
+  if (Date.now() - suppressClick < 500) return;
   const t = e.target.closest('button,[data-day],[data-slot]'); if (!t) return;
   const d = t.dataset;
   if (d.v) { S.view = d.v; if (d.v === 'cal' && S.calView !== 'month') S.tlScroll = true; render(); if (!(d.v === 'cal' && S.calView !== 'month')) window.scrollTo(0, 0); }
@@ -1003,7 +1177,8 @@ document.addEventListener('click', async e => {
   else if (d.ev) openEditor('event', S.events.find(x => x.id === d.ev), null, d.occ);
   else if (d.tk) openEditor('task', S.tasks.find(x => x.id === d.tk));
   else if (d.chk) await toggleTask(S.tasks.find(x => x.id === d.chk));
-  else if (d.k) { setKind(d.k); fillRemind($('f-remind').value); }
+  else if (d.k) { setKind(d.k); updRepeat(); fillRemind($('f-remind').value, $('f-remind2').value); }
+  else if (d.sc) { S.scope = d.sc; applyScope(); }
   else if (d.cdel) {
     if (confirm('Excluir esta categoria? Os eventos dela ficam sem categoria.')) { await run(sb.from('categories').delete().eq('id', d.cdel)); await loadAll(); }
   }
@@ -1012,10 +1187,10 @@ document.addEventListener('change', async e => {
   const d = e.target.dataset;
   if (d.cname) { const v = e.target.value.trim(); if (v) { await run(sb.from('categories').update({ name: v }).eq('id', d.cname)); await loadAll(); } }
   else if (d.ccolor) { await run(sb.from('categories').update({ color: e.target.value }).eq('id', d.ccolor)); await loadAll(); }
-  else if (['f-day', 'f-start', 'f-all', 'f-repeat'].includes(e.target.id)) {
+  else if (['f-day', 'f-start', 'f-all', 'f-repeat', 'f-remind'].includes(e.target.id)) {
     if (e.target.id === 'f-all') $('f-times').classList.toggle('hide', S.kind === 'event' && $('f-all').checked);
     updRepeat();
-    fillRemind($('f-remind').value);
+    fillRemind($('f-remind').value, $('f-remind2').value);
   }
 });
 function shift(dir) {
@@ -1034,7 +1209,7 @@ let swX = null, swY = null;
 ['m-grid', 'tl'].forEach(id => {
   $(id).addEventListener('touchstart', e => { swX = e.touches[0].clientX; swY = e.touches[0].clientY; }, { passive: true });
   $(id).addEventListener('touchend', e => {
-    if (swX === null) return;
+    if (swX === null || drag || Date.now() - suppressClick < 400) { swX = null; return; }
     const dx = e.changedTouches[0].clientX - swX, dy = e.changedTouches[0].clientY - swY; swX = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) shift(dx < 0 ? 1 : -1);
   }, { passive: true });
@@ -1045,16 +1220,38 @@ $('q-text').addEventListener('blur', () => { setTimeout(() => { if (dictating &&
 $('t-new').onclick = () => openEditor('task', null, {});
 $('f-cancel').onclick = closeEditor;
 $('f-save').onclick = saveEditor;
-$('f-del1').onclick = async () => {
-  if (!S.edit || !S.edit.occ) return;
-  await run(sb.from('events').update({ exdates: (S.edit.exdates || []).concat(S.edit.occ) }).eq('id', S.edit.id));
-  closeEditor(); await loadAll();
-};
 $('f-del').onclick = async () => {
-  if (!S.edit || !confirm(S.edit.series ? 'Apagar todas as repetições? Não dá para desfazer.' : 'Apagar? Não dá para desfazer.')) return;
+  if (!S.edit) return;
+  if (S.edit.scoped && S.scope === 'one') { await excludeOcc(S.events.find(x => x.id === S.edit.id), S.edit.occ); closeEditor(); await loadAll(); return; }
+  if (!confirm(S.edit.series ? 'Apagar todas as repetições? Não dá para desfazer.' : 'Apagar? Não dá para desfazer.')) return;
   await run(sb.from(S.edit.kind === 'event' ? 'events' : 'tasks').delete().eq('id', S.edit.id));
   closeEditor(); await loadAll();
 };
+$('f-join').onclick = () => { const u = $('f-meet').value.trim(); if (u) window.open(fixUrl(u), '_blank'); };
+$('f-meetnew').onclick = () => { window.open('https://meet.new', '_blank'); toast('Crie a sala, copie o link e cole aqui no campo.'); };
+$('f-mail').onclick = mailInvite;
+$('f-share').onclick = shareInvite;
+['f-guests', 'f-meet'].forEach(id => $(id).addEventListener('input', updExtras));
+$('tl').addEventListener('touchstart', e => {
+  const el = e.target.closest('.blk'); if (!el || e.touches.length !== 1) return;
+  const x = e.touches[0].clientX, y = e.touches[0].clientY;
+  dragPending = { x, y }; clearTimeout(dragTimer);
+  dragTimer = setTimeout(() => { if (dragPending) dragStart(el, x, y); }, 380);
+}, { passive: true });
+$('tl').addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if (drag) { e.preventDefault(); dragMove(t.clientX, t.clientY); }
+  else if (dragPending && (Math.abs(t.clientX - dragPending.x) > 8 || Math.abs(t.clientY - dragPending.y) > 8)) { clearTimeout(dragTimer); dragPending = null; }
+}, { passive: false });
+$('tl').addEventListener('touchend', () => { clearTimeout(dragTimer); dragPending = null; if (drag) dragEnd(false); });
+$('tl').addEventListener('touchcancel', () => { clearTimeout(dragTimer); dragPending = null; if (drag) dragEnd(true); });
+let mouseDrag = null;
+$('tl').addEventListener('mousedown', e => { const el = e.target.closest('.blk'); if (el && e.button === 0) mouseDrag = { el, x: e.clientX, y: e.clientY }; });
+document.addEventListener('mousemove', e => {
+  if (drag) { e.preventDefault(); dragMove(e.clientX, e.clientY); }
+  else if (mouseDrag && (Math.abs(e.clientX - mouseDrag.x) > 5 || Math.abs(e.clientY - mouseDrag.y) > 5)) { dragStart(mouseDrag.el, mouseDrag.x, mouseDrag.y); dragMove(e.clientX, e.clientY); }
+});
+document.addEventListener('mouseup', () => { mouseDrag = null; if (drag) dragEnd(false); });
 $('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeEditor(); });
 $('c-new').onclick = async () => { await run(sb.from('categories').insert({ name: 'Nova categoria', color: 'blue', sort: S.cats.length })); await loadAll(); };
 $('n-on').onclick = enablePush;
