@@ -230,9 +230,45 @@ nav button{font-weight:600}
 .tlh b{font-weight:600}
 .blk b{font-weight:700}
 .shead h3{font-weight:700}
+
+/* ---------- tema translúcido ---------- */
+body.th-glass{--h:#A1A1AA}
+body.th-glass .c-violet{--h:#A78BFA}
+body.th-glass .c-teal{--h:#2DD4BF}
+body.th-glass .c-amber{--h:#FBBF24}
+body.th-glass .c-red{--h:#F43F5E}
+body.th-glass .c-pink{--h:#F472B6}
+body.th-glass .c-green{--h:#4ADE80}
+body.th-glass .c-blue{--h:#60A5FA}
+body.th-glass .c-gray{--h:#A1A1AA}
+
+body.th-glass [class*="c-"]:is(.chip,.mc,.adchip,.blk,select){background:color-mix(in srgb,var(--h) 24%,transparent)!important;color:color-mix(in srgb,var(--h),#fff 30%)!important;box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--h) 45%,transparent)!important}
+body.th-glass .ev .bar[class*="c-"]{color:var(--h)!important}
+body.th-glass .mc.timed[class*="c-"]{background:transparent!important;box-shadow:none!important}
+body.th-glass .blk[class*="c-"]{border-left:3px solid var(--h);border-radius:4px 7px 7px 4px}
+body.th-glass .chip.on{border-color:var(--h)!important}
+body.th-glass .list,body.th-glass .group,body.th-glass main .group{background:rgba(255,255,255,.06)!important;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08)}
+body.th-glass .field,body.th-glass .seg,body.th-glass .round:not(.primary){background:rgba(255,255,255,.08)!important}
+body.th-glass .seg button.on{background:rgba(255,255,255,.16)!important}
+body.th-glass nav,body.th-glass .tlhead{background:rgba(20,20,22,.55)!important;-webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%)}
+body.th-glass .sheet{background:rgba(28,28,30,.78);-webkit-backdrop-filter:blur(30px) saturate(160%);backdrop-filter:blur(30px) saturate(160%)}
+body.th-glass #m-grid .cell.on{background:rgba(255,255,255,.08)}
+body.th-glass .mc.task{background:rgba(255,255,255,.09)}
+body.th-glass .mc.hol{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+
+@media (prefers-color-scheme: light){
+  body.th-glass [class*="c-"]:is(.chip,.mc,.adchip,.blk,select){background:color-mix(in srgb,var(--h) 20%,transparent)!important;color:color-mix(in srgb,var(--h),#000 45%)!important}
+  body.th-glass .list,body.th-glass .group,body.th-glass main .group{background:rgba(0,0,0,.04)!important;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.06)}
+  body.th-glass .field,body.th-glass .seg,body.th-glass .round:not(.primary){background:rgba(0,0,0,.05)!important}
+  body.th-glass .seg button.on{background:#fff!important}
+  body.th-glass nav,body.th-glass .tlhead{background:rgba(255,255,255,.6)!important}
+  body.th-glass .sheet{background:rgba(242,242,247,.82)}
+  body.th-glass #m-grid .cell.on{background:rgba(0,0,0,.05)}
+  body.th-glass .mc.task{background:rgba(0,0,0,.05)}
+}
 </style>
 </head>
-<body>
+<body class="th-glass">
 
 <main id="auth" class="hide">
   <h1>Calendário</h1>
@@ -339,7 +375,7 @@ nav button{font-weight:600}
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 16</p>
+      <p>Versão 17</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
