@@ -138,7 +138,7 @@ button.group{min-height:46px;text-align:center}
 #auth .field{margin-bottom:10px}
 #auth p{color:var(--muted);font-size:15px;line-height:1.4}
 #cv-seg{margin:0 0 10px}
-#mv .grid{border-bottom:.5px solid var(--line);padding-bottom:6px}
+#mv #m-grid{border-bottom:.5px solid var(--line);padding-bottom:6px}
 .tlhead,.tlall,.tlbody{display:grid;grid-template-columns:38px repeat(var(--n),minmax(0,1fr))}
 .tlhead{position:sticky;top:env(safe-area-inset-top);background:var(--bg);z-index:3;padding:4px 0;border-bottom:.5px solid var(--line)}
 .tlh{text-align:center;padding:2px 0}
@@ -175,6 +175,20 @@ button.group.link{color:var(--accent)}
 .adchip.hol{color:var(--accent);padding-left:2px;padding-right:2px}
 .wx{font-size:13px;color:var(--muted);margin:-2px 2px 10px}
 #tl .wx{margin:0 2px 6px}
+#m-grid{display:flex;flex-direction:column}
+.mrow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;max-height:96px;overflow:hidden;transition:max-height .28s ease,opacity .2s ease,margin .28s ease;margin-bottom:3px}
+.mrow.gone{max-height:0;opacity:0;margin-bottom:0}
+.cell{min-height:80px;text-align:left;padding:3px 2px;display:flex;flex-direction:column;align-items:stretch;gap:1px}
+.cell .num{align-self:center;width:28px;height:28px;line-height:28px;font-size:16px;text-align:center}
+.cell.on:not([class*=" c-"]){background:var(--fill)}
+.mc{display:block;font-style:normal;font-size:10px;line-height:14px;font-weight:500;border-radius:4px;padding:0 3px;white-space:nowrap;overflow:hidden;letter-spacing:-.2px}
+.mc.task{color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+.cell[class*=" c-"] .mc{box-shadow:inset 0 0 0 1px currentColor;background:transparent}
+.more{display:block;font-style:normal;font-size:10px;color:var(--muted);padding:0 3px}
+.cell small{text-align:center}
+.expander{display:block;width:100%;height:22px;margin:2px 0 4px}
+.expander span{display:block;width:38px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+#m-grid.collapsed .mrow:not(.gone){max-height:96px}
 </style>
 </head>
 <body>
@@ -214,7 +228,8 @@ button.group.link{color:var(--accent)}
     </div>
     <div id="mv">
       <div class="wdrow"><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span><span>D</span></div>
-      <div class="grid" id="m-grid"></div>
+      <div id="m-grid"></div>
+      <button class="expander hide" id="m-expand" aria-label="Mostrar o mês inteiro"><span></span></button>
       <h2 id="d-title"></h2>
       <div class="wx" id="d-wx"></div>
       <div class="chips" id="d-chips"></div>
@@ -283,7 +298,7 @@ button.group.link{color:var(--accent)}
     <h2>Conta</h2>
     <div class="group pad">
       <p id="u-email"></p>
-      <p>Versão 13</p>
+      <p>Versão 14</p>
       <button class="btn" id="u-upd">Buscar atualização</button>
       <button class="btn danger" id="u-out">Sair</button>
     </div>
@@ -626,6 +641,7 @@ function renderCal() {
 
 function renderMonth() {
   const y = S.month.getFullYear(), m = S.month.getMonth();
+  const collapsed = S.collapsed && S.sel.slice(0, 7) === y + '-' + pad(m + 1);
   $('m-title').textContent = MONTHS[m];
   $('m-year').textContent = y;
   const first = new Date(y, m, 1), days = new Date(y, m + 1, 0).getDate(), offset = (first.getDay() + 6) % 7;
@@ -633,25 +649,37 @@ function renderMonth() {
   const byDay = {};
   expand(ymd(first), y + '-' + pad(m + 1) + '-' + pad(days)).forEach(e => (byDay[e.day] = byDay[e.day] || []).push(e));
   const taskDay = {};
-  S.tasks.forEach(t => { if (t.due_day && !t.done) taskDay[t.due_day] = (taskDay[t.due_day] || 0) + 1; });
-  let h = '';
-  for (let i = 0; i < offset; i++) h += '<div></div>';
+  S.tasks.forEach(t => { if (t.due_day && !t.done) (taskDay[t.due_day] = taskDay[t.due_day] || []).push(t); });
+  const selRow = Math.floor((offset + fromYmd(S.sel).getDate() - 1) / 7);
+  const cells = [];
+  for (let i = 0; i < offset; i++) cells.push('<div></div>');
   for (let d = 1; d <= days; d++) {
     const key = y + '-' + pad(m + 1) + '-' + pad(d);
     const evs = byDay[key] || [];
-    const allDay = evs.find(e => !e.start_time && e.category_id && catOf(e.category_id)) || evs.find(e => !e.start_time);
-    const cat = allDay && catOf(allDay.category_id);
-    const others = evs.filter(e => e !== allDay).length + (taskDay[key] || 0);
+    const marker = evs.find(e => !e.start_time && e.category_id && catOf(e.category_id) && isMarker(e));
+    const cat = marker && catOf(marker.category_id);
+    const rest = evs.filter(e => e !== marker);
+    const tks = taskDay[key] || [];
     const cls = ['cell'];
     if (cat) cls.push('c-' + cat.color); else if ((offset + d - 1) % 7 >= 5) cls.push('we');
+    if (key === S.sel) cls.push('on');
     const ncls = ['num'];
     if (key === today) ncls.push('today');
     if (key === S.sel) ncls.push('sel');
-    h += '<button class="' + cls.join(' ') + '" data-day="' + key + '"><span class="' + ncls.join(' ') + '">' + d + '</span>' +
-      (allDay ? '<small>' + esc(allDay.title) + '</small>' : (holiday(key) ? '<small class="hol">' + esc(holiday(key)) + '</small>' : '')) +
-      (others ? '<span class="dots">' + '<i></i>'.repeat(Math.min(others, 3)) + '</span>' : '') + '</button>';
+    let lab = marker ? '<small>' + esc(marker.title) + '</small>' : (holiday(key) ? '<small class="hol">' + esc(holiday(key)) + '</small>' : '');
+    const chips = rest.map(e => { const c = catOf(e.category_id); return '<i class="mc ' + (c ? 'c-' + c.color : 'c-gray') + '">' + esc(e.title) + '</i>'; })
+      .concat(tks.map(t => '<i class="mc task">' + esc(t.title.replace(/^Estudo PC-BA:.*/, 'Estudo')) + '</i>'));
+    const max = marker || holiday(key) ? 1 : 2;
+    let ch = chips.slice(0, max).join('');
+    if (chips.length > max) ch += '<i class="more">+' + (chips.length - max) + '</i>';
+    cells.push('<button class="' + cls.join(' ') + '" data-day="' + key + '"><span class="' + ncls.join(' ') + '">' + d + '</span>' + lab + ch + '</button>');
   }
-  $('m-grid').innerHTML = h;
+  while (cells.length % 7) cells.push('<div></div>');
+  const rows = [];
+  for (let r = 0; r < cells.length / 7; r++) rows.push('<div class="mrow' + (collapsed && r !== selRow ? ' gone' : '') + '">' + cells.slice(r * 7, r * 7 + 7).join('') + '</div>');
+  $('m-grid').innerHTML = rows.join('');
+  $('m-grid').classList.toggle('collapsed', !!collapsed);
+  $('m-expand').classList.toggle('hide', !collapsed);
   renderDay();
 }
 
@@ -1310,9 +1338,16 @@ document.addEventListener('click', async e => {
   else if (d.cv) {
     S.calView = d.cv;
     try { localStorage.setItem('cal-view', d.cv); } catch (err) {}
-    if (d.cv === 'month') { syncMonth(); renderCal(); window.scrollTo(0, 0); } else { S.tlScroll = true; renderCal(); }
+    if (d.cv === 'month') { syncMonth(); S.collapsed = false; renderCal(); window.scrollTo(0, 0); } else { S.tlScroll = true; renderCal(); }
   }
   else if (d.day) {
+    if (t.classList.contains('cell') && S.calView === 'month') {
+      if (S.collapsed && S.sel === d.day) { S.calView = 'day'; S.tlScroll = true; try { localStorage.setItem('cal-view', 'day'); } catch (err) {} renderCal(); return; }
+      S.sel = d.day; S.collapsed = true; renderCal();
+      const top = $('m-grid').getBoundingClientRect().top + window.scrollY - 8 - (parseFloat(getComputedStyle(document.body).paddingTop) || 0);
+      if (window.scrollY > top) window.scrollTo({ top, behavior: 'smooth' });
+      return;
+    }
     S.sel = d.day;
     if (t.classList.contains('tlh') && S.calView !== 'day') { S.calView = 'day'; S.tlScroll = true; }
     renderCal();
@@ -1343,13 +1378,23 @@ document.addEventListener('change', async e => {
   }
 });
 function shift(dir) {
-  if (S.calView === 'month') S.month = new Date(S.month.getFullYear(), S.month.getMonth() + dir, 1);
+  if (S.calView === 'month' && S.collapsed) { S.sel = addDays(S.sel, dir * 7); syncMonth(); }
+  else if (S.calView === 'month') S.month = new Date(S.month.getFullYear(), S.month.getMonth() + dir, 1);
   else { S.sel = addDays(S.sel, dir * (S.calView === 'day' ? 1 : S.calView === '3' ? 3 : 7)); syncMonth(); }
   renderCal();
 }
+$('m-expand').onclick = () => { S.collapsed = false; renderCal(); };
+let pullY = null;
+$('mv').addEventListener('touchstart', e => { pullY = e.target.closest('#m-grid,#m-expand') ? e.touches[0].clientY : null; }, { passive: true });
+$('mv').addEventListener('touchend', e => {
+  if (pullY === null) return;
+  const dy = e.changedTouches[0].clientY - pullY; pullY = null;
+  if (dy > 50 && S.collapsed) { S.collapsed = false; renderCal(); }
+  else if (dy < -50 && !S.collapsed) { S.collapsed = true; renderCal(); }
+}, { passive: true });
 $('m-prev').onclick = () => shift(-1);
 $('m-next').onclick = () => shift(1);
-$('m-today').onclick = () => { S.sel = ymd(new Date()); syncMonth(); if (S.calView !== 'month') S.tlScroll = true; renderCal(); };
+$('m-today').onclick = () => { S.sel = ymd(new Date()); syncMonth(); if (S.calView === 'month') S.collapsed = true; if (S.calView !== 'month') S.tlScroll = true; renderCal(); };
 $('q-add').onclick = () => { dictating = false; clearTimeout(dictTimer); quickAdd(); };
 $('q-mic').onclick = voice;
 $('q-plus').onclick = () => openEditor('event', null, { day: S.sel });
